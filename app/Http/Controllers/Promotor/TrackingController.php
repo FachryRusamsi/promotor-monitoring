@@ -21,9 +21,32 @@ class TrackingController extends Controller
     /**
      * Show the promotor dashboard / tracking page.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        return Inertia::render('Promotor/Dashboard');
+        $user = $request->user();
+        $today = now()->toDateString();
+
+        // 1. Get Attendance Status
+        $attendance = $user->attendances()->whereDate('work_date', $today)->latest()->first();
+        $attendanceStatus = 'Belum Check In';
+        if ($attendance) {
+            $attendanceStatus = $attendance->check_out_time ? 'Sudah Check Out' : 'Sudah Check In';
+        }
+
+        // 2. Get Today's Metrics
+        $transactions = $user->transactions()->whereDate('transaction_date', $today)->get();
+        $totalEdukasi = $transactions->sum('jml_edukasi');
+        $totalPenjualan = $transactions->sum('jml_sp') + $transactions->sum('jml_pulsa');
+        $totalAktivasi = $transactions->sum('jml_aktivasi_gemini');
+
+        return Inertia::render('Promotor/Dashboard', [
+            'metrics' => [
+                'edukasi' => $totalEdukasi,
+                'penjualan' => $totalPenjualan,
+                'aktivasi' => $totalAktivasi,
+            ],
+            'attendanceStatus' => $attendanceStatus,
+        ]);
     }
 
     /**

@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue';
 import { Head } from '@inertiajs/vue3';
+import AdminLayout from '@/Layouts/AdminLayout.vue';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -78,33 +79,38 @@ onUnmounted(() => {
 <template>
   <Head title="Live Monitoring Promotor" />
 
-  <div class="max-w-7xl mx-auto p-6">
-    <div class="mb-6 border-b pb-4">
-      <h1 class="text-3xl font-bold text-gray-800">Live Monitoring Promotor</h1>
-      <p class="text-gray-500 mt-1">Lacak pergerakan promotor secara real-time via GPS & WebSocket.</p>
-    </div>
+  <AdminLayout>
+    <template #header>Live Monitoring</template>
 
-    <!-- Peta Leaflet -->
-    <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden relative">
-      <!-- Info Overlay -->
-      <div class="absolute top-4 right-4 z-[400] bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-sm border border-gray-200">
-        <div class="flex items-center gap-2">
+    <div class="h-full flex flex-col p-4 md:p-6 gap-4">
+      <div class="flex justify-between items-center mb-2">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-800">Peta Promotor</h2>
+          <p class="text-sm text-gray-500">Lacak lokasi promotor secara real-time</p>
+        </div>
+        <div class="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 border border-emerald-100">
           <span class="relative flex h-3 w-3">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
           </span>
-          <span class="text-sm font-medium text-gray-700">Reverb WebSocket Active</span>
+          Live Socket Active
         </div>
       </div>
-      
-      <div ref="mapContainer" class="w-full h-[600px] z-0"></div>
+
+      <!-- Peta Leaflet -->
+      <div class="flex-1 min-h-[500px] bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden relative z-0">
+        <div ref="mapContainer" class="w-full h-full"></div>
+      </div>
     </div>
-  </div>
+  </AdminLayout>
 </template>
 
 <style>
 /* Z-index fix for leaflet map so it doesn't overlap header/menus */
 .leaflet-container {
+  z-index: 0;
+}
+.leaflet-top, .leaflet-bottom {
   z-index: 10;
 }
 </style>
