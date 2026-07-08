@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Promotor;
 
 use App\Events\PromotorLocationUpdated;
 use App\Http\Controllers\Controller;
+use App\Services\AttendanceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -26,18 +27,8 @@ class TrackingController extends Controller
         $user = $request->user();
         $today = now()->toDateString();
 
-        $attendance = $user->attendances()
-            ->whereDate('work_date', $today)
-            ->latest()
-            ->first();
-
-        $attendanceStatus = 'Belum Check In';
-
-        if ($attendance) {
-            $attendanceStatus = $attendance->check_out_at
-                ? 'Sudah Check Out'
-                : 'Sudah Check In';
-        }
+        $attendanceService = new AttendanceService();
+        $attendanceStatus = $attendanceService->getTodayAttendanceStatus($user);
 
         $transactions = $user->transactions()
             ->whereDate('transaction_date', $today)
