@@ -26,19 +26,22 @@ return new class extends Migration
 
             $table->timestamp('check_out_at')->nullable();
 
+            $table->decimal('work_hour', 5, 2)->nullable()
+                ->comment('Calculated: check_out_at - check_in_at in hours');
+
             $table->string('check_in_photo')->nullable();
 
             $table->string('check_out_photo')->nullable();
 
-            $table->decimal('check_in_lat',10,7)->nullable();
+            $table->decimal('check_in_lat', 10, 7)->nullable();
 
-            $table->decimal('check_in_lng',10,7)->nullable();
+            $table->decimal('check_in_lng', 10, 7)->nullable();
 
-            $table->decimal('check_out_lat',10,7)->nullable();
+            $table->decimal('check_out_lat', 10, 7)->nullable();
 
-            $table->decimal('check_out_lng',10,7)->nullable();
+            $table->decimal('check_out_lng', 10, 7)->nullable();
 
-            $table->enum('status',[
+            $table->enum('status', [
                 'working',
                 'finished'
             ])->default('working');
