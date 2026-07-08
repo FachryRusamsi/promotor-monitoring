@@ -3,8 +3,29 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Activity extends Model
 {
-    //
+    protected $fillable = [
+        'user_id',
+        'attendance_id',
+        'activity_type',
+        'description',
+        'performed_at',
+    ];
+
+    protected $casts = [
+        'performed_at' => 'datetime',
+    ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function attendance(): BelongsTo
+    {
+        return $this->belongsTo(Attendance::class);
+    }
 }
