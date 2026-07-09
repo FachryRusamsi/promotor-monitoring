@@ -220,7 +220,7 @@ watch([selectedRegion, selectedArea, startDate, endDate], ([newRegion, newArea, 
 
                 <!-- Promotor Ranking -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-                    <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Top 10 Promotor</h3>
+                    <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Top 5 Promotor</h3>
                     <div class="space-y-4 h-[400px] overflow-y-auto pr-2">
                         <div v-for="(promotor, index) in topPromotors" :key="promotor.id" class="flex items-center justify-between">
                             <div class="flex items-center gap-3">

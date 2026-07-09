@@ -103,7 +103,7 @@ class DashboardController extends Controller
         }
 
         $topPromotors = $promotorQuery->orderByDesc('total_sales')
-            ->limit(10)
+            ->limit(5)
             ->get()
             ->map(function($user) {
                 return [
