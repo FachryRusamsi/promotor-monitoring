@@ -49,12 +49,12 @@ watch([selectedRegion, selectedArea, startDate, endDate], ([newRegion, newArea, 
 
         <div class="p-4 md:p-6 space-y-6">
             <!-- Filter Section -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-lg font-bold text-gray-800">Filter Data</h2>
                     <p class="text-sm text-gray-500">Filter berdasarkan region, branch, atau rentang waktu.</p>
                 </div>
-                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto">
                     <input type="date" v-model="startDate" class="w-full md:w-36 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                     <span class="text-gray-400 hidden md:inline">-</span>
                     <input type="date" v-model="endDate" class="w-full md:w-36 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
@@ -71,23 +71,22 @@ watch([selectedRegion, selectedArea, startDate, endDate], ([newRegion, newArea, 
                             {{ area.name }}
                         </option>
                     </select>
-                </div>
-            </div>
 
-            <!-- View Toggle -->
-            <div class="flex justify-end">
-                <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-sm text-sm border border-gray-200">
-                    <span class="font-medium text-gray-700">Tampilkan Semua Promotor</span>
-                    <button 
-                        @click="showAllPromotors = !showAllPromotors"
-                        :class="showAllPromotors ? 'bg-indigo-600' : 'bg-gray-200'"
-                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
-                    >
-                        <span 
-                            :class="showAllPromotors ? 'translate-x-5' : 'translate-x-0'"
-                            class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                        />
-                    </button>
+                    <div class="w-px h-8 bg-gray-200 hidden xl:block mx-1"></div>
+                    
+                    <div class="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200 w-full md:w-auto justify-between md:justify-start">
+                        <span class="text-sm font-medium text-gray-700">Semua Promotor</span>
+                        <button 
+                            @click="showAllPromotors = !showAllPromotors"
+                            :class="showAllPromotors ? 'bg-indigo-600' : 'bg-gray-300'"
+                            class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                        >
+                            <span 
+                                :class="showAllPromotors ? 'translate-x-4' : 'translate-x-0'"
+                                class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                            />
+                        </button>
+                    </div>
                 </div>
             </div>
 
