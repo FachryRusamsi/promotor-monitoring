@@ -95,6 +95,31 @@ class DashboardController extends Controller
                 ];
             });
 
+        // All Promotors KPI breakdown (for modal/switch view)
+        $allPromotorsQuery = User::whereHas('role', fn($q) => $q->where('name', 'promotor'))
+            ->withSum('transactions as total_edukasi', 'jml_edukasi')
+            ->withSum('transactions as total_sp', 'jml_sp')
+            ->withSum('transactions as total_pulsa', 'jml_pulsa')
+            ->withSum('transactions as total_gemini', 'jml_aktivasi_gemini');
+
+        if ($regionId) {
+            $allPromotorsQuery->where('region_id', $regionId);
+        }
+        if ($areaId) {
+            $allPromotorsQuery->where('area_id', $areaId);
+        }
+
+        $allPromotors = $allPromotorsQuery->get()->map(function($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'total_edukasi' => (int) ($user->total_edukasi ?? 0),
+                'total_sp' => (int) ($user->total_sp ?? 0),
+                'total_pulsa' => (int) ($user->total_pulsa ?? 0),
+                'total_gemini' => (int) ($user->total_gemini ?? 0),
+            ];
+        });
+
         return Inertia::render('Admin/Dashboard', [
             'regions' => Region::with('areas')->get(),
             'currentFilters' => [
@@ -105,6 +130,7 @@ class DashboardController extends Controller
             'regionRankings' => $regionRankings,
             'topBranches' => $topBranches,
             'topPromotors' => $topPromotors,
+            'allPromotors' => $allPromotors,
         ]);
     }
 

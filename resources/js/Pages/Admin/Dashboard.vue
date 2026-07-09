@@ -10,10 +10,12 @@ const props = defineProps({
     regionRankings: Array,
     topBranches: Array,
     topPromotors: Array,
+    allPromotors: Array,
 });
 
 const selectedRegion = ref(props.currentFilters?.region_id || '');
 const selectedArea = ref(props.currentFilters?.area_id || '');
+const showAllPromotors = ref(false);
 
 const availableAreas = computed(() => {
   if (!selectedRegion.value) return [];
@@ -39,7 +41,24 @@ watch([selectedRegion, selectedArea], ([newRegion, newArea], [oldRegion]) => {
     <Head title="Admin Dashboard" />
 
     <AdminLayout>
-        <template #header>Dashboard KPI Penjualan</template>
+        <template #header>
+            <div class="flex items-center justify-between">
+                <span>Dashboard KPI Penjualan</span>
+                <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-sm text-sm border border-gray-200">
+                    <span class="font-medium text-gray-700">Tampilkan Semua Promotor</span>
+                    <button 
+                        @click="showAllPromotors = !showAllPromotors"
+                        :class="showAllPromotors ? 'bg-indigo-600' : 'bg-gray-200'"
+                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                    >
+                        <span 
+                            :class="showAllPromotors ? 'translate-x-5' : 'translate-x-0'"
+                            class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        />
+                    </button>
+                </div>
+            </div>
+        </template>
 
         <div class="p-4 md:p-6 space-y-6">
             <!-- Filter Section -->
@@ -84,8 +103,73 @@ watch([selectedRegion, selectedArea], ([newRegion, newArea], [oldRegion]) => {
                 </div>
             </div>
 
-            <!-- Rankings -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- All Promotors Table View (Toggled) -->
+            <div v-if="showAllPromotors" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg">List Semua Promotor</h3>
+                        <p class="text-sm text-gray-500 mt-1">Detail KPI individual untuk setiap promotor berdasarkan filter area aktif.</p>
+                    </div>
+                    <div class="text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
+                        {{ allPromotors.length }} Promotor
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 border-b border-gray-100 text-sm font-semibold text-gray-600">
+                                <th class="py-4 px-6">Nama Promotor</th>
+                                <th class="py-4 px-6">Region / Branch</th>
+                                <th class="py-4 px-6 text-right">Total Edukasi</th>
+                                <th class="py-4 px-6 text-right">Total Starter Pack</th>
+                                <th class="py-4 px-6 text-right">Total Pulsa</th>
+                                <th class="py-4 px-6 text-right">Aktivasi Gemini</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <tr v-for="promotor in allPromotors" :key="promotor.id" class="hover:bg-gray-50 transition-colors">
+                                <td class="py-4 px-6">
+                                    <div class="font-medium text-gray-800">{{ promotor.name }}</div>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <div class="text-sm text-gray-600">
+                                        <span class="block">{{ promotor.region_name || '-' }}</span>
+                                        <span class="block text-xs text-gray-400">{{ promotor.area_name || '-' }}</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 text-right">
+                                    <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 font-semibold w-16">
+                                        {{ promotor.total_edukasi }}
+                                    </span>
+                                </td>
+                                <td class="py-4 px-6 text-right">
+                                    <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 font-semibold w-16">
+                                        {{ promotor.total_sp }}
+                                    </span>
+                                </td>
+                                <td class="py-4 px-6 text-right">
+                                    <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 font-semibold w-16">
+                                        {{ promotor.total_pulsa }}
+                                    </span>
+                                </td>
+                                <td class="py-4 px-6 text-right">
+                                    <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 font-semibold w-16">
+                                        {{ promotor.total_gemini }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr v-if="allPromotors.length === 0">
+                                <td colspan="6" class="py-8 text-center text-gray-500">
+                                    Tidak ada data promotor yang sesuai dengan filter.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Rankings (Hidden when showAllPromotors is true) -->
+            <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Region Ranking -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                     <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Ranking Region (Nasional)</h3>
