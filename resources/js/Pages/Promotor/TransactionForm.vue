@@ -43,6 +43,18 @@ const submit = () => {
     preserveScroll: true,
     onSuccess: () => {
       form.reset();
+    },
+    onError: (errors) => {
+        let errorMessages = Object.values(errors).flat().join('<br>');
+        import('sweetalert2').then(({ default: Swal }) => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                html: errorMessages,
+                confirmButtonText: 'Mengerti',
+                confirmButtonColor: '#4f46e5'
+            });
+        });
     }
   });
 };
