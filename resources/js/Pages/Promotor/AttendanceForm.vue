@@ -118,17 +118,26 @@ const submit = () => {
         return;
     }
 
+    const handleError = (errors: any) => {
+        let errorMessages = Object.values(errors).flat().join('<br>');
+        import('sweetalert2').then(({ default: Swal }) => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                html: errorMessages,
+                confirmButtonText: 'Mengerti',
+                confirmButtonColor: '#4f46e5'
+            });
+        });
+    };
+
     if (props.status === 'Belum Check In') {
         form.post(route('promotor.attendance.checkin'), {
-            onSuccess: () => {
-                // Success handled by flash message / redirection
-            }
+            onError: handleError
         });
     } else if (props.status === 'Sudah Check In') {
         form.post(route('promotor.attendance.checkout'), {
-            onSuccess: () => {
-                // Success handled by flash message / redirection
-            }
+            onError: handleError
         });
     }
 };

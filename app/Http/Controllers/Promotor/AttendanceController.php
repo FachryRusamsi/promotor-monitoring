@@ -39,7 +39,7 @@ class AttendanceController extends Controller
                 'lat' => $request->lat,
                 'lng' => $request->lng,
             ]);
-        } catch (\RuntimeException $exception) {
+        } catch (\Throwable $exception) {
             return back()->with('error', $exception->getMessage());
         }
 
@@ -62,7 +62,7 @@ class AttendanceController extends Controller
                 'lat' => $request->lat,
                 'lng' => $request->lng,
             ]);
-        } catch (\RuntimeException $exception) {
+        } catch (\Throwable $exception) {
             return back()->with('error', $exception->getMessage());
         }
 

@@ -1,5 +1,32 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { watch } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
+import Swal from 'sweetalert2';
+
+const page = usePage();
+
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+});
+
+watch(() => page.props.flash, (flash: any) => {
+    if (flash?.success) {
+        Toast.fire({
+            icon: 'success',
+            title: flash.success
+        });
+    }
+    if (flash?.error) {
+        Toast.fire({
+            icon: 'error',
+            title: flash.error
+        });
+    }
+}, { deep: true, immediate: true });
 </script>
 
 <template>
