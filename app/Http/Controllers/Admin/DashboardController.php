@@ -18,6 +18,8 @@ class DashboardController extends Controller
     {
         $regionId = $request->query('region_id');
         $areaId = $request->query('area_id');
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
 
         // Query KPI Nasional atau per Region/Area
         $kpiQuery = Transaction::query();
@@ -32,6 +34,13 @@ class DashboardController extends Controller
                 $q->where('area_id', $areaId);
             });
         }
+        if ($startDate && $endDate) {
+            $kpiQuery->whereBetween('transaction_date', [$startDate, $endDate]);
+        } elseif ($startDate) {
+            $kpiQuery->whereDate('transaction_date', '>=', $startDate);
+        } elseif ($endDate) {
+            $kpiQuery->whereDate('transaction_date', '<=', $endDate);
+        }
 
         $kpi = [
             'total_edukasi' => (int) $kpiQuery->sum('jml_edukasi'),
@@ -40,8 +49,19 @@ class DashboardController extends Controller
             'total_gemini' => (int) $kpiQuery->sum('jml_aktivasi_gemini'),
         ];
 
+        // Relation filter for withSum
+        $transactionFilter = function($q) use ($startDate, $endDate) {
+            if ($startDate && $endDate) {
+                $q->whereBetween('transaction_date', [$startDate, $endDate]);
+            } elseif ($startDate) {
+                $q->whereDate('transaction_date', '>=', $startDate);
+            } elseif ($endDate) {
+                $q->whereDate('transaction_date', '<=', $endDate);
+            }
+        };
+
         // Ranking Region (Semua region)
-        $regionRankings = Region::withSum('transactions as total_sales', DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'))
+        $regionRankings = Region::withSum(['transactions as total_sales' => $transactionFilter], DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'))
             ->orderByDesc('total_sales')
             ->get()
             ->map(function($region) {
@@ -53,7 +73,7 @@ class DashboardController extends Controller
             });
 
         // Ranking Top 5 Branch
-        $branchQuery = Area::withSum('transactions as total_sales', DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'));
+        $branchQuery = Area::withSum(['transactions as total_sales' => $transactionFilter], DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'));
         
         if ($regionId) {
             $branchQuery->where('region_id', $regionId);
@@ -73,7 +93,7 @@ class DashboardController extends Controller
 
         // Top Rank Promotors
         $promotorQuery = User::whereHas('role', fn($q) => $q->where('name', 'promotor'))
-            ->withSum('transactions as total_sales', DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'));
+            ->withSum(['transactions as total_sales' => $transactionFilter], DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'));
             
         if ($regionId) {
             $promotorQuery->where('region_id', $regionId);
@@ -97,10 +117,10 @@ class DashboardController extends Controller
 
         // All Promotors KPI breakdown (for modal/switch view)
         $allPromotorsQuery = User::whereHas('role', fn($q) => $q->where('name', 'promotor'))
-            ->withSum('transactions as total_edukasi', 'jml_edukasi')
-            ->withSum('transactions as total_sp', 'jml_sp')
-            ->withSum('transactions as total_pulsa', 'jml_pulsa')
-            ->withSum('transactions as total_gemini', 'jml_aktivasi_gemini');
+            ->withSum(['transactions as total_edukasi' => $transactionFilter], 'jml_edukasi')
+            ->withSum(['transactions as total_sp' => $transactionFilter], 'jml_sp')
+            ->withSum(['transactions as total_pulsa' => $transactionFilter], 'jml_pulsa')
+            ->withSum(['transactions as total_gemini' => $transactionFilter], 'jml_aktivasi_gemini');
 
         if ($regionId) {
             $allPromotorsQuery->where('region_id', $regionId);
@@ -125,6 +145,8 @@ class DashboardController extends Controller
             'currentFilters' => [
                 'region_id' => $regionId,
                 'area_id' => $areaId,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
             ],
             'kpi' => $kpi,
             'regionRankings' => $regionRankings,
