@@ -179,6 +179,10 @@ class DashboardController extends Controller
                     'check_in_time' => $attendance?->check_in_at?->format('H:i'),
                     'check_in_lat' => $attendance?->check_in_lat,
                     'check_in_lng' => $attendance?->check_in_lng,
+                    'check_out_time' => $attendance?->check_out_at?->format('H:i'),
+                    'check_out_lat' => $attendance?->check_out_lat,
+                    'check_out_lng' => $attendance?->check_out_lng,
+                    'status' => $attendance?->status,
                     'has_reported' => $hasReported,
                 ];
             });

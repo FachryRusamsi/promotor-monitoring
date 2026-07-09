@@ -213,10 +213,16 @@ onUnmounted(() => {
             </div>
             <div>
               <h3 class="font-bold text-gray-800 text-lg line-clamp-1">{{ promotor.name }}</h3>
-              <p class="text-sm text-gray-500 flex items-center gap-1">
-                <span :class="promotor.check_in_time ? 'text-green-500' : 'text-red-500'">●</span>
-                {{ promotor.check_in_time ? `Masuk: ${promotor.check_in_time}` : 'Belum Absen' }}
-              </p>
+              <div class="flex flex-col gap-1">
+                <p class="text-sm text-gray-500 flex items-center gap-1">
+                  <span :class="promotor.check_in_time ? 'text-green-500' : 'text-red-500'">●</span>
+                  {{ promotor.check_in_time ? `Masuk: ${promotor.check_in_time}` : 'Belum Absen' }}
+                </p>
+                <p class="text-sm text-gray-500 flex items-center gap-1">
+                  <span :class="promotor.check_out_time ? 'text-green-500' : 'text-gray-400'">●</span>
+                  {{ promotor.check_out_time ? `Keluar: ${promotor.check_out_time}` : 'Belum Keluar' }}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -268,6 +274,25 @@ onUnmounted(() => {
                 <div>
                   <div class="font-bold text-gray-800">{{ selectedPromotor?.check_in_time || 'Belum Absen' }}</div>
                   <div class="text-xs text-gray-500">Waktu Check-in Hari Ini</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Status Jam Keluar -->
+            <div>
+              <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Status Jam Keluar</h4>
+              <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                <div :class="['p-2 rounded-full', selectedPromotor?.check_out_time ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500']">
+                  <svg v-if="selectedPromotor?.check_out_time" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                  </svg>
+                  <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="font-bold text-gray-800">{{ selectedPromotor?.check_out_time || 'Belum Keluar' }}</div>
+                  <div class="text-xs text-gray-500">Waktu Check-out Hari Ini</div>
                 </div>
               </div>
             </div>
