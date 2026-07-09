@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Area;
+use App\Models\Region;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -21,7 +24,10 @@ class RegisteredUserController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Auth/Register');
+        return Inertia::render('Auth/Register', [
+            'regions' => Region::all(),
+            'areas' => Area::all(),
+        ]);
     }
 
     /**
@@ -32,14 +38,28 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:20', 'unique:users,phone'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
+
+            'region_id' => ['required', 'exists:regions,id'],
+            'area_id' => ['required', 'exists:areas,id'],
+
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        $promotorRole = Role::where('name', 'promotor')->firstOrFail();
+
         $user = User::create([
+            'role_id' => $promotorRole->id,
+
+            'region_id' => $request->region_id,
+            'area_id' => $request->area_id,
+
             'name' => $request->name,
+            'phone' => $request->phone,
             'email' => $request->email,
+
             'password' => Hash::make($request->password),
         ]);
 
@@ -47,6 +67,6 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect()->route('promotor.dashboard');
     }
 }
