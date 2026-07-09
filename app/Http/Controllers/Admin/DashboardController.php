@@ -17,13 +17,19 @@ class DashboardController extends Controller
     public function index(Request $request): Response
     {
         $regionId = $request->query('region_id');
+        $areaId = $request->query('area_id');
 
-        // Query KPI Nasional atau per Region
+        // Query KPI Nasional atau per Region/Area
         $kpiQuery = Transaction::query();
         
         if ($regionId) {
             $kpiQuery->whereHas('user', function($q) use ($regionId) {
                 $q->where('region_id', $regionId);
+            });
+        }
+        if ($areaId) {
+            $kpiQuery->whereHas('user', function($q) use ($areaId) {
+                $q->where('area_id', $areaId);
             });
         }
 
@@ -46,7 +52,7 @@ class DashboardController extends Controller
                 ];
             });
 
-        // Ranking Top 5 Branch (Berdasarkan region filter atau secara nasional jika tidak difilter)
+        // Ranking Top 5 Branch
         $branchQuery = Area::withSum('transactions as total_sales', DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'));
         
         if ($regionId) {
@@ -65,12 +71,40 @@ class DashboardController extends Controller
                 ];
             });
 
+        // Top Rank Promotors
+        $promotorQuery = User::whereHas('role', fn($q) => $q->where('name', 'promotor'))
+            ->withSum('transactions as total_sales', DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'));
+            
+        if ($regionId) {
+            $promotorQuery->where('region_id', $regionId);
+        }
+        if ($areaId) {
+            $promotorQuery->where('area_id', $areaId);
+        }
+
+        $topPromotors = $promotorQuery->orderByDesc('total_sales')
+            ->limit(10)
+            ->get()
+            ->map(function($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'region_name' => $user->region->name ?? '',
+                    'area_name' => $user->area->name ?? '',
+                    'total_sales' => $user->total_sales ?? 0
+                ];
+            });
+
         return Inertia::render('Admin/Dashboard', [
-            'regions' => Region::all(),
-            'currentRegionId' => $regionId,
+            'regions' => Region::with('areas')->get(),
+            'currentFilters' => [
+                'region_id' => $regionId,
+                'area_id' => $areaId,
+            ],
             'kpi' => $kpi,
             'regionRankings' => $regionRankings,
             'topBranches' => $topBranches,
+            'topPromotors' => $topPromotors,
         ]);
     }
 

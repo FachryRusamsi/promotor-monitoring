@@ -1,20 +1,37 @@
 <script setup>
 import { Head, router } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const props = defineProps({
     regions: Array,
-    currentRegionId: [String, Number],
+    currentFilters: Object,
     kpi: Object,
     regionRankings: Array,
     topBranches: Array,
+    topPromotors: Array,
 });
 
-const selectedRegion = ref(props.currentRegionId || '');
+const selectedRegion = ref(props.currentFilters?.region_id || '');
+const selectedArea = ref(props.currentFilters?.area_id || '');
 
-watch(selectedRegion, (newVal) => {
-    router.get(route('admin.dashboard'), { region_id: newVal }, { preserveState: true });
+const availableAreas = computed(() => {
+  if (!selectedRegion.value) return [];
+  const region = props.regions.find(r => r.id == selectedRegion.value);
+  return region ? region.areas : [];
+});
+
+watch([selectedRegion, selectedArea], ([newRegion, newArea], [oldRegion]) => {
+  if (newRegion !== oldRegion) {
+    selectedArea.value = ''; // Reset area when region changes
+  }
+  
+  import('@inertiajs/vue3').then(({ router }) => {
+    router.get(route('admin.dashboard'), { 
+      region_id: selectedRegion.value, 
+      area_id: selectedArea.value 
+    }, { preserveState: true });
+  });
 });
 </script>
 
@@ -26,16 +43,22 @@ watch(selectedRegion, (newVal) => {
 
         <div class="p-4 md:p-6 space-y-6">
             <!-- Filter Section -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-lg font-bold text-gray-800">Filter Data</h2>
-                    <p class="text-sm text-gray-500">Pilih region untuk melihat data spesifik.</p>
+                    <p class="text-sm text-gray-500">Pilih region dan branch untuk melihat data spesifik.</p>
                 </div>
-                <div class="w-64">
-                    <select v-model="selectedRegion" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <select v-model="selectedRegion" class="w-full md:w-48 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
                         <option value="">Semua Region (Nasional)</option>
                         <option v-for="region in regions" :key="region.id" :value="region.id">
                             {{ region.name }}
+                        </option>
+                    </select>
+                    <select v-model="selectedArea" :disabled="!selectedRegion" class="w-full md:w-48 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm disabled:bg-gray-100">
+                        <option value="">Semua Branch</option>
+                        <option v-for="area in availableAreas" :key="area.id" :value="area.id">
+                            {{ area.name }}
                         </option>
                     </select>
                 </div>
@@ -61,7 +84,8 @@ watch(selectedRegion, (newVal) => {
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Rankings -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Region Ranking -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                     <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Ranking Region (Nasional)</h3>
@@ -81,7 +105,7 @@ watch(selectedRegion, (newVal) => {
 
                 <!-- Branch Ranking -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-                    <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Top 5 Branch {{ selectedRegion ? '(Filtered)' : '(Nasional)' }}</h3>
+                    <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Top 5 Branch</h3>
                     <div class="space-y-4">
                         <div v-for="(branch, index) in topBranches" :key="branch.id" class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
@@ -94,6 +118,28 @@ watch(selectedRegion, (newVal) => {
                                 </div>
                             </div>
                             <span class="font-bold text-emerald-600">{{ branch.total_sales }} Transaksi</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Promotor Ranking -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                    <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Top 10 Promotor</h3>
+                    <div class="space-y-4 h-[400px] overflow-y-auto pr-2">
+                        <div v-for="(promotor, index) in topPromotors" :key="promotor.id" class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold flex-shrink-0">
+                                    {{ index + 1 }}
+                                </span>
+                                <div>
+                                    <p class="font-medium text-gray-700 line-clamp-1">{{ promotor.name }}</p>
+                                    <p class="text-xs text-gray-400">{{ promotor.area_name }}, {{ promotor.region_name }}</p>
+                                </div>
+                            </div>
+                            <span class="font-bold text-blue-600 flex-shrink-0">{{ promotor.total_sales }} Trx</span>
+                        </div>
+                        <div v-if="topPromotors.length === 0" class="text-center text-gray-500 py-4 text-sm">
+                            Tidak ada data promotor.
                         </div>
                     </div>
                 </div>
