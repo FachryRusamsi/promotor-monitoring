@@ -45,24 +45,7 @@ watch([selectedRegion, selectedArea, startDate, endDate], ([newRegion, newArea, 
     <Head title="Admin Dashboard" />
 
     <AdminLayout>
-        <template #header>
-            <div class="flex items-center justify-between">
-                <span>Dashboard KPI Penjualan</span>
-                <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-sm text-sm border border-gray-200">
-                    <span class="font-medium text-gray-700">Tampilkan Semua Promotor</span>
-                    <button 
-                        @click="showAllPromotors = !showAllPromotors"
-                        :class="showAllPromotors ? 'bg-indigo-600' : 'bg-gray-200'"
-                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
-                    >
-                        <span 
-                            :class="showAllPromotors ? 'translate-x-5' : 'translate-x-0'"
-                            class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                        />
-                    </button>
-                </div>
-            </div>
-        </template>
+        <template #header>Dashboard KPI Penjualan</template>
 
         <div class="p-4 md:p-6 space-y-6">
             <!-- Filter Section -->
@@ -88,6 +71,23 @@ watch([selectedRegion, selectedArea, startDate, endDate], ([newRegion, newArea, 
                             {{ area.name }}
                         </option>
                     </select>
+                </div>
+            </div>
+
+            <!-- View Toggle -->
+            <div class="flex justify-end">
+                <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-sm text-sm border border-gray-200">
+                    <span class="font-medium text-gray-700">Tampilkan Semua Promotor</span>
+                    <button 
+                        @click="showAllPromotors = !showAllPromotors"
+                        :class="showAllPromotors ? 'bg-indigo-600' : 'bg-gray-200'"
+                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                    >
+                        <span 
+                            :class="showAllPromotors ? 'translate-x-5' : 'translate-x-0'"
+                            class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                        />
+                    </button>
                 </div>
             </div>
 
