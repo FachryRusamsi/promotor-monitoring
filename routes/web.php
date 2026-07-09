@@ -62,6 +62,9 @@ Route::prefix('admin')
         Route::get('/reports', [ReportController::class, 'index'])
             ->name('reports.index');
 
+        Route::get('/reports/export', [ReportController::class, 'exportAchievement'])
+            ->name('reports.export');
+
         // Promotor tracking queries (reads from Redis)
         Route::get('/tracking/{promotor}/latest', [TrackingController::class, 'latest'])
             ->name('tracking.latest');

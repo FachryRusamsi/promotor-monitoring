@@ -7,16 +7,21 @@ import 'leaflet/dist/leaflet.css';
 import axios from 'axios';
 
 // Fix Leaflet marker missing icons in Vite
-import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
+import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
 
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl,
-  iconUrl,
-  shadowUrl,
+const customIcon = L.icon({
+    iconUrl: iconUrl,
+    iconRetinaUrl: iconRetinaUrl,
+    shadowUrl: shadowUrl,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
 });
+
+L.Marker.prototype.options.icon = customIcon;
 
 const props = defineProps({
   promotors: {
@@ -89,6 +94,11 @@ const initMap = () => {
     maxZoom: 19,
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
+
+  // Fix map sizing inside modal transition
+  setTimeout(() => {
+      map.invalidateSize();
+  }, 300);
 };
 
 const fetchLatestLocation = async (id) => {
@@ -135,11 +145,15 @@ const updatePromotorLocation = (payload, isFallback = false) => {
     currentMarker.setLatLng(latLng);
     currentMarker.getPopup().setContent(popupContent);
   } else {
-    currentMarker = L.marker(latLng).addTo(map);
+    currentMarker = L.marker(latLng, { icon: customIcon }).addTo(map);
     currentMarker.bindPopup(popupContent).openPopup();
   }
   
-  map.setView(latLng, 15);
+  // Force map to pan directly to the pointer with proper zoom
+  setTimeout(() => {
+      map.invalidateSize();
+      map.setView(latLng, 16, { animate: true });
+  }, 350);
 };
 
 onMounted(() => {

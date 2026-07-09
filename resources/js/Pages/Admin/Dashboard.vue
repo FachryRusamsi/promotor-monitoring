@@ -2,6 +2,11 @@
 import { Head, router } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, PointElement, LineElement, CategoryScale, LinearScale } from 'chart.js';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { Pie, Line } from 'vue-chartjs';
+
+ChartJS.register(ArcElement, Tooltip, Legend, PointElement, LineElement, CategoryScale, LinearScale, ChartDataLabels);
 
 const props = defineProps({
     regions: Array,
@@ -18,6 +23,79 @@ const selectedArea = ref(props.currentFilters?.area_id || '');
 const startDate = ref(props.currentFilters?.start_date || '');
 const endDate = ref(props.currentFilters?.end_date || '');
 const showAllPromotors = ref(false);
+const viewMode = ref('table'); // 'table' or 'chart'
+
+const pieChartData = computed(() => ({
+    labels: props.regionRankings.map(r => r.name),
+    datasets: [{
+        backgroundColor: ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'],
+        data: props.regionRankings.map(r => r.total_sales)
+    }]
+}));
+
+const pieChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        datalabels: {
+            color: '#fff',
+            font: {
+                weight: 'bold',
+                size: 14
+            },
+            formatter: (value, ctx) => {
+                const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                if (total === 0) return '0%';
+                const percentage = Math.round((value / total) * 100) + '%';
+                return percentage;
+            },
+        }
+    }
+};
+
+const lineChartData = computed(() => ({
+    labels: props.allPromotors.map(p => (p.name.length > 15 ? p.name.substring(0, 15) + '...' : p.name)),
+    datasets: [
+        { 
+            label: 'Edukasi', 
+            borderColor: '#EF4444', 
+            backgroundColor: '#EF4444',
+            tension: 0.3,
+            data: props.allPromotors.map(p => p.total_edukasi) 
+        },
+        { 
+            label: 'Starter Pack', 
+            borderColor: '#F59E0B', 
+            backgroundColor: '#F59E0B',
+            tension: 0.3,
+            data: props.allPromotors.map(p => p.total_sp) 
+        },
+        { 
+            label: 'Pulsa', 
+            borderColor: '#10B981', 
+            backgroundColor: '#10B981',
+            tension: 0.3,
+            data: props.allPromotors.map(p => p.total_pulsa) 
+        },
+        { 
+            label: 'Aktivasi Gemini', 
+            borderColor: '#8B5CF6', 
+            backgroundColor: '#8B5CF6',
+            tension: 0.3,
+            data: props.allPromotors.map(p => p.total_gemini) 
+        }
+    ]
+}));
+
+const lineChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        datalabels: {
+            display: false // Hide data labels on Line Chart so it doesn't look messy
+        }
+    }
+};
 
 const availableAreas = computed(() => {
   if (!selectedRegion.value) return [];
@@ -75,23 +153,45 @@ watch([selectedRegion, selectedArea, startDate, endDate], ([newRegion, newArea, 
             </div>
 
             <!-- View Toggle Section -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-sm font-bold text-gray-800">Mode Tampilan</h2>
                     <p class="text-xs text-gray-500">Ubah cara data ditampilkan pada dashboard</p>
                 </div>
-                <div class="flex items-center gap-3">
-                    <span class="font-medium text-gray-700 text-sm">Tampilkan Semua Promotor</span>
-                    <button 
-                        @click="showAllPromotors = !showAllPromotors"
-                        :class="showAllPromotors ? 'bg-indigo-600' : 'bg-gray-300'"
-                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
-                    >
-                        <span 
-                            :class="showAllPromotors ? 'translate-x-5' : 'translate-x-0'"
-                            class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                        />
-                    </button>
+                <div class="flex flex-col sm:flex-row items-center gap-6 w-full md:w-auto">
+                    
+                    <!-- View Mode (Table vs Chart) -->
+                    <div class="flex bg-gray-100 p-1 rounded-lg w-full sm:w-auto">
+                        <button 
+                            @click="viewMode = 'table'" 
+                            :class="viewMode === 'table' ? 'bg-white shadow-sm text-indigo-600 font-bold' : 'text-gray-500 hover:text-gray-700'"
+                            class="flex-1 px-4 py-1.5 text-sm rounded-md transition-all text-center"
+                        >
+                            Tampilan Data
+                        </button>
+                        <button 
+                            @click="viewMode = 'chart'" 
+                            :class="viewMode === 'chart' ? 'bg-white shadow-sm text-indigo-600 font-bold' : 'text-gray-500 hover:text-gray-700'"
+                            class="flex-1 px-4 py-1.5 text-sm rounded-md transition-all text-center"
+                        >
+                            Grafik Visual
+                        </button>
+                    </div>
+
+                    <!-- Toggle All Promotors (Only in Table Mode) -->
+                    <div v-if="viewMode === 'table'" class="flex items-center gap-3 w-full sm:w-auto justify-end sm:border-l sm:border-gray-200 sm:pl-6">
+                        <span class="font-medium text-gray-700 text-sm">Tampilkan Semua Promotor</span>
+                        <button 
+                            @click="showAllPromotors = !showAllPromotors"
+                            :class="showAllPromotors ? 'bg-indigo-600' : 'bg-gray-300'"
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                        >
+                            <span 
+                                :class="showAllPromotors ? 'translate-x-5' : 'translate-x-0'"
+                                class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                            />
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -115,18 +215,48 @@ watch([selectedRegion, selectedArea, startDate, endDate], ([newRegion, newArea, 
                 </div>
             </div>
 
-            <!-- All Promotors Table View (Toggled) -->
-            <div v-if="showAllPromotors" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-                    <div>
-                        <h3 class="font-bold text-gray-800 text-lg">List Semua Promotor</h3>
-                        <p class="text-sm text-gray-500 mt-1">Detail KPI individual untuk setiap promotor berdasarkan filter area aktif.</p>
+            <!-- CHART VIEW MODE -->
+            <div v-if="viewMode === 'chart'" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Pie Chart: Dominasi Region -->
+                    <div class="lg:col-span-1 flex flex-col h-[400px]">
+                        <h4 class="text-sm font-bold text-gray-700 mb-4 text-center">Dominasi Keseluruhan (Berdasarkan Region)</h4>
+                        <div class="flex-1 relative">
+                            <Pie v-if="regionRankings.length > 0" :data="pieChartData" :options="pieChartOptions" />
+                            <div v-else class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
+                                Tidak ada data region.
+                            </div>
+                        </div>
                     </div>
-                    <div class="text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
-                        {{ allPromotors.length }} Promotor
+
+                    <!-- Bar Chart: Performa Promotor -->
+                    <div class="lg:col-span-2 flex flex-col h-[400px]">
+                        <h4 class="text-sm font-bold text-gray-700 mb-4 text-center">Perbandingan Performa tiap Promotor (DSE)</h4>
+                        <div class="flex-1 relative">
+                            <Line v-if="allPromotors.length > 0" :data="lineChartData" :options="lineChartOptions" />
+                            <div v-else class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
+                                Tidak ada data promotor.
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="overflow-x-auto">
+            </div>
+
+            <!-- TABLE VIEW MODE -->
+            <template v-else>
+                <!-- All Promotors Table View (Toggled) -->
+                <div v-if="showAllPromotors" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-lg">List Semua Promotor</h3>
+                            <p class="text-sm text-gray-500 mt-1">Detail KPI individual untuk setiap promotor berdasarkan filter area aktif.</p>
+                        </div>
+                        <div class="text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full">
+                            {{ allPromotors.length }} Promotor
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-gray-50 border-b border-gray-100 text-sm font-semibold text-gray-600">
@@ -179,67 +309,68 @@ watch([selectedRegion, selectedArea, startDate, endDate], ([newRegion, newArea, 
                     </table>
                 </div>
             </div>
-
+            
             <!-- Rankings (Hidden when showAllPromotors is true) -->
             <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Region Ranking -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-                    <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Ranking Region (Nasional)</h3>
-                    <div class="space-y-4">
-                        <div v-for="(region, index) in regionRankings" :key="region.id" class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <span class="w-8 h-8 rounded-full flex items-center justify-center font-bold" 
-                                    :class="index === 0 ? 'bg-yellow-100 text-yellow-700' : (index === 1 ? 'bg-gray-100 text-gray-700' : 'bg-orange-50 text-orange-700')">
-                                    {{ index + 1 }}
-                                </span>
-                                <span class="font-medium text-gray-700">{{ region.name }}</span>
-                            </div>
-                            <span class="font-bold text-indigo-600">{{ region.total_sales }} Transaksi</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Branch Ranking -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-                    <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Top 5 Branch</h3>
-                    <div class="space-y-4">
-                        <div v-for="(branch, index) in topBranches" :key="branch.id" class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <span class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-                                    {{ index + 1 }}
-                                </span>
-                                <div>
-                                    <p class="font-medium text-gray-700">{{ branch.name }}</p>
-                                    <p class="text-xs text-gray-400">{{ branch.region_name }}</p>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                        <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Ranking Region (Nasional)</h3>
+                        <div class="space-y-4">
+                            <div v-for="(region, index) in regionRankings" :key="region.id" class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-8 h-8 rounded-full flex items-center justify-center font-bold" 
+                                        :class="index === 0 ? 'bg-yellow-100 text-yellow-700' : (index === 1 ? 'bg-gray-100 text-gray-700' : 'bg-orange-50 text-orange-700')">
+                                        {{ index + 1 }}
+                                    </span>
+                                    <span class="font-medium text-gray-700">{{ region.name }}</span>
                                 </div>
+                                <span class="font-bold text-indigo-600">{{ region.total_sales }} Transaksi</span>
                             </div>
-                            <span class="font-bold text-emerald-600">{{ branch.total_sales }} Transaksi</span>
                         </div>
                     </div>
-                </div>
 
-                <!-- Promotor Ranking -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-                    <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Top 5 Promotor</h3>
-                    <div class="space-y-4 h-[400px] overflow-y-auto pr-2">
-                        <div v-for="(promotor, index) in topPromotors" :key="promotor.id" class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <span class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold flex-shrink-0">
-                                    {{ index + 1 }}
-                                </span>
-                                <div>
-                                    <p class="font-medium text-gray-700 line-clamp-1">{{ promotor.name }}</p>
-                                    <p class="text-xs text-gray-400">{{ promotor.area_name }}, {{ promotor.region_name }}</p>
+                    <!-- Branch Ranking -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                        <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Top 5 Branch</h3>
+                        <div class="space-y-4">
+                            <div v-for="(branch, index) in topBranches" :key="branch.id" class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                                        {{ index + 1 }}
+                                    </span>
+                                    <div>
+                                        <p class="font-medium text-gray-700">{{ branch.name }}</p>
+                                        <p class="text-xs text-gray-400">{{ branch.region_name }}</p>
+                                    </div>
                                 </div>
+                                <span class="font-bold text-emerald-600">{{ branch.total_sales }} Transaksi</span>
                             </div>
-                            <span class="font-bold text-blue-600 flex-shrink-0">{{ promotor.total_sales }} Trx</span>
                         </div>
-                        <div v-if="topPromotors.length === 0" class="text-center text-gray-500 py-4 text-sm">
-                            Tidak ada data promotor.
+                    </div>
+
+                    <!-- Promotor Ranking -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                        <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Top 5 Promotor</h3>
+                        <div class="space-y-4 h-[400px] overflow-y-auto pr-2">
+                            <div v-for="(promotor, index) in topPromotors" :key="promotor.id" class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold flex-shrink-0">
+                                        {{ index + 1 }}
+                                    </span>
+                                    <div>
+                                        <p class="font-medium text-gray-700 line-clamp-1">{{ promotor.name }}</p>
+                                        <p class="text-xs text-gray-400">{{ promotor.area_name }}, {{ promotor.region_name }}</p>
+                                    </div>
+                                </div>
+                                <span class="font-bold text-blue-600 flex-shrink-0">{{ promotor.total_sales }} Trx</span>
+                            </div>
+                            <div v-if="topPromotors.length === 0" class="text-center text-gray-500 py-4 text-sm">
+                                Tidak ada data promotor.
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </template>
         </div>
     </AdminLayout>
 </template>

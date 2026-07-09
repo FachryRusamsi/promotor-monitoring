@@ -78,11 +78,11 @@ class TrackingController extends Controller
 
         // Store latest position
         $cacheKey = "promotor:location:{$user->id}";
-        Cache::store('redis')->put($cacheKey, $payload, self::CACHE_TTL);
+        Cache::put($cacheKey, $payload, self::CACHE_TTL);
 
         // Store recent history (max 50 points)
         $historyKey = "promotor:location:{$user->id}:history";
-        $history = Cache::store('redis')->get($historyKey, []);
+        $history = Cache::get($historyKey, []);
 
         $history[] = $payload;
 
@@ -90,7 +90,7 @@ class TrackingController extends Controller
             $history = array_slice($history, -50);
         }
 
-        Cache::store('redis')->put($historyKey, $history, self::CACHE_TTL);
+        Cache::put($historyKey, $history, self::CACHE_TTL);
 
         // Broadcast realtime update
         broadcast(new PromotorLocationUpdated($payload))->toOthers();
@@ -123,10 +123,10 @@ class TrackingController extends Controller
 
         $violationKey = "promotor:violations:{$user->id}";
 
-        $violations = Cache::store('redis')->get($violationKey, []);
+        $violations = Cache::get($violationKey, []);
         $violations[] = $violation;
 
-        Cache::store('redis')->put($violationKey, $violations, 86400);
+        Cache::put($violationKey, $violations, 86400);
 
         Log::warning('[AntiCheat] Violation detected', $violation);
 
@@ -141,7 +141,7 @@ class TrackingController extends Controller
     public function latest(int $promotorId): JsonResponse
     {
         $cacheKey = "promotor:location:{$promotorId}";
-        $location = Cache::store('redis')->get($cacheKey);
+        $location = Cache::get($cacheKey);
 
         if (!$location) {
             return response()->json([
@@ -163,7 +163,7 @@ class TrackingController extends Controller
     {
         $historyKey = "promotor:location:{$promotorId}:history";
 
-        $history = Cache::store('redis')->get($historyKey, []);
+        $history = Cache::get($historyKey, []);
 
         return response()->json([
             'data' => $history,

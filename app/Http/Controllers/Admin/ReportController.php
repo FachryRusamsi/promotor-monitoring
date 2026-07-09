@@ -8,6 +8,8 @@ use App\Models\Region;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Exports\AchievementReportExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
 {
@@ -83,5 +85,18 @@ class ReportController extends Controller
                 'area_id' => $areaId,
             ]
         ]);
+    }
+
+    public function exportAchievement(Request $request)
+    {
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+        $regionId = $request->query('region_id');
+        $areaId = $request->query('area_id');
+
+        return Excel::download(
+            new AchievementReportExport($startDate, $endDate, $regionId, $areaId), 
+            'Report-Achievement-Promotor.xlsx'
+        );
     }
 }
