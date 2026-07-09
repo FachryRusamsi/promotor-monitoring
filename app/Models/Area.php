@@ -27,4 +27,9 @@ class Area extends Model
     {
         return $this->hasMany(Outlet::class);
     }
+
+    public function transactions()
+    {
+        return $this->hasManyThrough(Transaction::class, User::class);
+    }
 }

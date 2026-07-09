@@ -4,14 +4,84 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Region;
+use App\Models\Area;
+use App\Models\Transaction;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $regionId = $request->query('region_id');
+
+        // Query KPI Nasional atau per Region
+        $kpiQuery = Transaction::query();
+        
+        if ($regionId) {
+            $kpiQuery->whereHas('user', function($q) use ($regionId) {
+                $q->where('region_id', $regionId);
+            });
+        }
+
+        $kpi = [
+            'total_edukasi' => (int) $kpiQuery->sum('jml_edukasi'),
+            'total_sp' => (int) $kpiQuery->sum('jml_sp'),
+            'total_pulsa' => (int) $kpiQuery->sum('jml_pulsa'),
+            'total_gemini' => (int) $kpiQuery->sum('jml_aktivasi_gemini'),
+        ];
+
+        // Ranking Region (Semua region)
+        $regionRankings = Region::withSum('transactions as total_sales', DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'))
+            ->orderByDesc('total_sales')
+            ->get()
+            ->map(function($region) {
+                return [
+                    'id' => $region->id,
+                    'name' => $region->name,
+                    'total_sales' => $region->total_sales ?? 0
+                ];
+            });
+
+        // Ranking Top 5 Branch (Berdasarkan region filter atau secara nasional jika tidak difilter)
+        $branchQuery = Area::withSum('transactions as total_sales', DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'));
+        
+        if ($regionId) {
+            $branchQuery->where('region_id', $regionId);
+        }
+
+        $topBranches = $branchQuery->orderByDesc('total_sales')
+            ->limit(5)
+            ->get()
+            ->map(function($branch) {
+                return [
+                    'id' => $branch->id,
+                    'name' => $branch->name,
+                    'region_name' => $branch->region->name ?? '',
+                    'total_sales' => $branch->total_sales ?? 0
+                ];
+            });
+
+        return Inertia::render('Admin/Dashboard', [
+            'regions' => Region::all(),
+            'currentRegionId' => $regionId,
+            'kpi' => $kpi,
+            'regionRankings' => $regionRankings,
+            'topBranches' => $topBranches,
+        ]);
+    }
+
+    public function monitoring(Request $request): Response
+    {
+        $regionId = $request->query('region_id');
+        $areaId = $request->query('area_id');
+
         $promotors = User::whereHas('role', fn ($q) => $q->where('name', 'promotor'))
+            ->when($regionId, fn ($q) => $q->where('region_id', $regionId))
+            ->when($areaId, fn ($q) => $q->where('area_id', $areaId))
             ->with([
                 'attendances' => fn ($q) => $q->whereDate('work_date', today()),
                 'transactions' => fn ($q) => $q->whereDate('transaction_date', today())
@@ -33,6 +103,11 @@ class DashboardController extends Controller
 
         return Inertia::render('Admin/Monitoring', [
             'promotors' => $promotors,
+            'regions' => Region::with('areas')->get(),
+            'currentFilters' => [
+                'region_id' => $regionId,
+                'area_id' => $areaId,
+            ]
         ]);
     }
 }

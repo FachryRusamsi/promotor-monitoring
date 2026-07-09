@@ -26,6 +26,7 @@ class AttendanceService
         return $attendance->check_out_at ? 'Sudah Check Out' : 'Sudah Check In';
     }
 
+
     public function checkIn($user, array $data): Attendance
     {
         $today = now()->toDateString();
@@ -33,6 +34,8 @@ class AttendanceService
         if ($user->attendances()->whereDate('work_date', $today)->exists()) {
             throw new RuntimeException('Anda sudah melakukan Check In hari ini.');
         }
+
+
 
         $path = $data['photo']->store('attendances/checkin', 'public');
 
@@ -58,6 +61,8 @@ class AttendanceService
         if ($attendance->check_out_at) {
             throw new RuntimeException('Anda sudah melakukan Check Out.');
         }
+
+
 
         $path = $data['photo']->store('attendances/checkout', 'public');
         $workHours = now()->diffInMinutes($attendance->check_in_at) / 60;

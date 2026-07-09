@@ -55,6 +55,9 @@ Route::prefix('admin')
 
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])
             ->name('dashboard');
+            
+        Route::get('/monitoring', [AdminDashboardController::class, 'monitoring'])
+            ->name('monitoring');
 
         Route::get('/reports', [ReportController::class, 'index'])
             ->name('reports.index');
@@ -81,6 +84,7 @@ Route::prefix('promotor')
 
         // GPS tracking (high-frequency, Redis-only)
         Route::post('/tracking/update', [TrackingController::class, 'update'])
+            ->middleware('throttle:15,1')
             ->name('tracking.update');
 
         // Anti-cheat violation reports

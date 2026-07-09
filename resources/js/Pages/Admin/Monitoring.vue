@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, ref, nextTick, watch } from 'vue';
+import { onMounted, onUnmounted, ref, nextTick, watch, computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import L from 'leaflet';
@@ -22,7 +22,37 @@ const props = defineProps({
   promotors: {
     type: Array,
     default: () => []
+  },
+  regions: {
+    type: Array,
+    default: () => []
+  },
+  currentFilters: {
+    type: Object,
+    default: () => ({ region_id: '', area_id: '' })
   }
+});
+
+const selectedRegion = ref(props.currentFilters.region_id || '');
+const selectedArea = ref(props.currentFilters.area_id || '');
+
+const availableAreas = computed(() => {
+  if (!selectedRegion.value) return [];
+  const region = props.regions.find(r => r.id == selectedRegion.value);
+  return region ? region.areas : [];
+});
+
+watch([selectedRegion, selectedArea], ([newRegion, newArea], [oldRegion]) => {
+  if (newRegion !== oldRegion) {
+    selectedArea.value = ''; // Reset area when region changes
+  }
+  
+  import('@inertiajs/vue3').then(({ router }) => {
+    router.get(route('admin.monitoring'), { 
+      region_id: selectedRegion.value, 
+      area_id: selectedArea.value 
+    }, { preserveState: true });
+  });
 });
 
 const selectedPromotor = ref(null);
@@ -141,19 +171,33 @@ onUnmounted(() => {
     <template #header>Daftar Promotor</template>
 
     <div class="p-4 md:p-6 h-full flex flex-col">
-      <div class="flex justify-between items-center mb-6">
-        <div>
-          <h2 class="text-2xl font-bold text-gray-800">Daftar Promotor</h2>
-          <p class="text-sm text-gray-500">Pilih promotor untuk melihat detail & live location</p>
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-800">Daftar Promotor</h2>
+            <p class="text-sm text-gray-500">Pilih promotor untuk melihat detail & live location</p>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <!-- Filter Dropdowns -->
+            <select v-model="selectedRegion" class="rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+              <option value="">Semua Region</option>
+              <option v-for="region in regions" :key="region.id" :value="region.id">{{ region.name }}</option>
+            </select>
+            
+            <select v-model="selectedArea" :disabled="!selectedRegion" class="rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100">
+              <option value="">Semua Branch</option>
+              <option v-for="area in availableAreas" :key="area.id" :value="area.id">{{ area.name }}</option>
+            </select>
+
+            <div class="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 border border-emerald-100 ml-4">
+              <span class="relative flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+              </span>
+              Live Socket Active
+            </div>
+          </div>
         </div>
-        <div class="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 border border-emerald-100">
-          <span class="relative flex h-3 w-3">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-          </span>
-          Live Socket Active
-        </div>
-      </div>
 
       <!-- Grid Promotor -->
       <div v-if="promotors.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-10">

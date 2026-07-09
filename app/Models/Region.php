@@ -15,4 +15,9 @@ class Region extends Model
     {
         return $this->hasMany(Area::class);
     }
+
+    public function transactions()
+    {
+        return $this->hasManyThrough(Transaction::class, User::class);
+    }
 }

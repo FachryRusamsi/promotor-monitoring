@@ -50,13 +50,13 @@ class TransactionController extends Controller
         }
 
         $request->validate([
-            'jml_edukasi' => 'required|integer|min:0',
-            'jml_sp' => 'required|integer|min:0',
-            'jml_pulsa' => 'required|integer|min:0',
-            'jml_aktivasi_gemini' => 'required|integer|min:0',
+            'jml_edukasi' => 'required|integer|min:0|max:1000',
+            'jml_sp' => 'required|integer|min:0|max:1000',
+            'jml_pulsa' => 'required|integer|min:0|max:1000',
+            'jml_aktivasi_gemini' => 'required|integer|min:0|max:1000',
 
-            'foto_edukasi' => 'nullable|image|max:10240',
-            'foto_penjualan' => 'nullable|image|max:10240',
+            'foto_edukasi' => 'nullable|image|mimes:jpeg,png,jpg|max:10240',
+            'foto_penjualan' => 'nullable|image|mimes:jpeg,png,jpg|max:10240',
 
             'msisdns' => 'nullable|array',
             'msisdns.*.number' => [
