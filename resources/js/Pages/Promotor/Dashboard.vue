@@ -16,14 +16,13 @@ defineProps<{
     <Head title="Beranda Promotor" />
     <PromotorLayout>
         <!-- Header Section -->
-        <div class="bg-indigo-600 text-white pt-8 pb-16 px-6 rounded-b-3xl shadow-lg relative overflow-hidden">
-            <!-- Decorative circles -->
-            <div class="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 rounded-full bg-white opacity-10"></div>
-            <div class="absolute bottom-0 left-0 -ml-16 -mb-16 w-40 h-40 rounded-full bg-white opacity-10"></div>
-            
-            <div class="relative z-10">
-                <h1 class="text-3xl font-extrabold tracking-tight">Halo, {{ $page.props.auth.user.name.split(' ')[0] }}!</h1>
-                <p class="text-indigo-200 mt-2 text-sm font-medium">Tetap semangat capai target hari ini ya!</p>
+        <div class="bg-slate-100 text-slate-950 pt-28 pb-16 pl-6 pr-0 shadow-lg relative overflow-hidden">
+            <img src="/image/logos/Logogram IOH.png" alt="Logogram IOH" class="pointer-events-none absolute -left-16 -top-16 h-96 w-auto opacity-80" />
+
+            <div class="relative z-10 flex w-full items-start justify-center">
+                <div class="text-left w-full max-w-2xl mx-auto">
+                    <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight text-white">Halo, {{ $page.props.auth.user.name.split(' ')[0] }}!</h1>
+                </div>
             </div>
         </div>
 
@@ -32,24 +31,24 @@ defineProps<{
             
             <!-- Quick Actions -->
             <div class="grid grid-cols-2 gap-4">
-                <Link :href="route('promotor.attendance.index')" class="bg-white rounded-2xl shadow-md p-4 flex flex-col items-center justify-center gap-3 transition-transform active:scale-95 border border-gray-100">
-                    <div class="w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
-                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <Link :href="route('promotor.attendance.index')" class="bg-white shadow-md p-4 flex flex-col items-center justify-center gap-3 transition-transform active:scale-95 border border-gray-100">
+                    <div class="w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center">
+                        <img src="/image/icon/Icon%20IOH-Register.png" alt="Absensi" class="w-8 h-8 object-contain" />
                     </div>
                     <span class="font-semibold text-gray-800 text-sm">Absensi</span>
                 </Link>
-                <Link :href="route('promotor.transactions.index')" class="bg-white rounded-2xl shadow-md p-4 flex flex-col items-center justify-center gap-3 transition-transform active:scale-95 border border-gray-100">
-                    <div class="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
-                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                <Link :href="route('promotor.transactions.index')" class="bg-white shadow-md p-4 flex flex-col items-center justify-center gap-3 transition-transform active:scale-95 border border-gray-100">
+                    <div class="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center">
+                        <img src="/image/icon/Icon IOH-Report.png" alt="Lapor Penjualan" class="w-8 h-8 object-contain" />
                     </div>
                     <span class="font-semibold text-gray-800 text-sm">Lapor Penjualan</span>
                 </Link>
             </div>
 
             <!-- Metrics -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <div class="bg-white shadow-sm border border-gray-100 p-5">
                 <h2 class="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                    <img src="/image/icon/Icon%20IOH-Stock%20Market.png" alt="Pencapaian Hari Ini" class="w-5 h-5 object-contain" />
                     Pencapaian Hari Ini
                 </h2>
                 
@@ -70,7 +69,7 @@ defineProps<{
             </div>
 
             <!-- Attendance Status -->
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 flex items-center justify-between">
+            <div class="bg-white shadow-sm border border-gray-100 p-5 flex items-center justify-between">
                 <div>
                     <h2 class="text-sm font-semibold text-gray-500">Status Kehadiran</h2>
                     <div class="mt-1 flex items-center gap-2">
