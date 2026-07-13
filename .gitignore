@@ -26,3 +26,7 @@ cloudflared*
 *.exe
 *_run.txt
 update_dates.php
+
+# Excel temporary/owner files
+~$*
+
