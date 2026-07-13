@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import PromotorLayout from '@/Layouts/PromotorLayout.vue';
 import InputError from '@/Components/InputError.vue';
 
@@ -8,8 +9,8 @@ const form = useForm({
   jml_sp: 0,
   jml_pulsa: 0,
   jml_aktivasi_gemini: 0,
-  foto_edukasi: null as File | null,
-  foto_penjualan: null as File | null,
+  foto_edukasi: [] as File[],
+  foto_penjualan: [] as File[],
   msisdns: [
     { number: '', type: 'starter_pack', notes: '' }
   ]
@@ -38,7 +39,35 @@ const removeMsisdn = (index: number) => {
   form.msisdns.splice(index, 1);
 };
 
+const isDataMatching = computed(() => {
+  return mismatchErrors.value.length === 0;
+});
+
+const mismatchErrors = computed(() => {
+  const errors: string[] = [];
+  
+  const countSp = form.msisdns.filter(m => m.type === 'starter_pack' && m.number.length >= 8).length;
+  const countPulsa = form.msisdns.filter(m => m.type === 'reload' && m.number.length >= 8).length;
+  const countGemini = form.msisdns.filter(m => m.type === 'gemini_activation' && m.number.length >= 8).length;
+
+  if (countSp !== form.jml_sp) {
+    errors.push(`Starter Pack (diinput: ${countSp}, target: ${form.jml_sp})`);
+  }
+  if (countPulsa !== form.jml_pulsa) {
+    errors.push(`Pulsa (diinput: ${countPulsa}, target: ${form.jml_pulsa})`);
+  }
+  if (countGemini !== form.jml_aktivasi_gemini) {
+    errors.push(`Gemini (diinput: ${countGemini}, target: ${form.jml_aktivasi_gemini})`);
+  }
+
+  return errors;
+});
+
 const submit = () => {
+  if (!isDataMatching.value) {
+    return;
+  }
+  
   form.post(route('promotor.transactions.store'), {
     preserveScroll: true,
     onSuccess: () => {
@@ -107,14 +136,24 @@ const submit = () => {
           <div class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Foto Edukasi</label>
-              <input type="file" @input="form.foto_edukasi = ($event.target as HTMLInputElement).files?.[0] || null" accept="image/*" 
+              <input type="file" multiple @input="form.foto_edukasi = Array.from(($event.target as HTMLInputElement).files || [])" accept="image/*" 
                 class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-gray-200 rounded-lg" />
+              <div v-if="form.foto_edukasi.length > 0" class="mt-2 flex flex-wrap gap-2">
+                <span v-for="(file, idx) in form.foto_edukasi" :key="idx" class="inline-flex items-center px-2 py-1 rounded-md bg-indigo-50 text-indigo-700 text-xs font-medium">
+                  {{ file.name }}
+                </span>
+              </div>
               <InputError :message="form.errors.foto_edukasi" class="mt-1" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Foto Penjualan</label>
-              <input type="file" @input="form.foto_penjualan = ($event.target as HTMLInputElement).files?.[0] || null" accept="image/*" 
+              <input type="file" multiple @input="form.foto_penjualan = Array.from(($event.target as HTMLInputElement).files || [])" accept="image/*" 
                 class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 border border-gray-200 rounded-lg" />
+              <div v-if="form.foto_penjualan.length > 0" class="mt-2 flex flex-wrap gap-2">
+                <span v-for="(file, idx) in form.foto_penjualan" :key="idx" class="inline-flex items-center px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-medium">
+                  {{ file.name }}
+                </span>
+              </div>
               <InputError :message="form.errors.foto_penjualan" class="mt-1" />
             </div>
           </div>
@@ -176,8 +215,20 @@ const submit = () => {
           </button>
         </div>
          
+        <!-- Validation Warnings -->
+        <div v-if="!isDataMatching" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex flex-col gap-1 text-sm">
+          <p class="font-bold flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            Tombol Submit Terkunci!
+          </p>
+          <p>Jumlah MSISDN yang valid tidak sesuai dengan kuantitas yang Anda masukkan:</p>
+          <ul class="list-disc pl-5 mt-1 font-semibold">
+            <li v-for="err in mismatchErrors" :key="err">{{ err }}</li>
+          </ul>
+        </div>
+         
         <!-- Submit Button -->
-        <button type="submit" :disabled="form.processing" class="w-full flex justify-center items-center gap-2 py-4 px-4 border border-transparent rounded-xl shadow-lg text-base font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50">
+        <button type="submit" :disabled="form.processing || !isDataMatching" class="w-full flex justify-center items-center gap-2 py-4 px-4 border border-transparent rounded-xl shadow-lg text-base font-bold text-white transition-colors disabled:opacity-50" :class="isDataMatching ? 'bg-indigo-600 hover:bg-indigo-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:outline-none' : 'bg-gray-400 cursor-not-allowed'">
           <span v-if="form.processing" class="flex items-center gap-2">
             <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

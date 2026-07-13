@@ -45,6 +45,7 @@ const statusColors = {
   valid: 'bg-green-100 text-green-800',
   invalid: 'bg-red-100 text-red-800'
 };
+
 </script>
 
 <template>
@@ -109,12 +110,12 @@ const statusColors = {
               <h2 class="text-lg font-bold text-gray-800">{{ report.promotor_name }}</h2>
             </div>
             
-            <div class="flex flex-col gap-3 items-end">
+            <div class="flex flex-col gap-3 items-start md:items-end w-full md:w-auto">
               <div class="text-xs text-gray-500 font-medium">
                 Masuk: <span class="text-emerald-600 font-bold mr-3">{{ report.check_in_at ? report.check_in_at.split(' ')[1] : '-' }}</span>
                 Keluar: <span class="text-red-600 font-bold">{{ report.check_out_at ? report.check_out_at.split(' ')[1] : '-' }}</span>
               </div>
-              <div class="flex flex-wrap gap-2 text-sm font-medium text-gray-600">
+              <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 text-sm font-medium text-gray-600 w-full md:w-auto">
                 <div class="bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-2">
                   <span class="text-gray-400 text-xs uppercase">Edukasi</span>
                   <span class="text-indigo-600 font-bold">{{ report.total_edukasi }}</span>
@@ -135,20 +136,19 @@ const statusColors = {
             </div>
           </div>
 
-          <!-- MSISDN Details Table -->
-          <div class="overflow-x-auto">
+          <!-- MSISDN Details Table (Desktop View) -->
+          <div class="hidden md:block overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">No. HP (MSISDN)</th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tipe</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status Validasi</th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Waktu Transaksi</th>
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-100">
                 <tr v-if="report.msisdn_list.length === 0">
-                  <td colspan="4" class="px-6 py-8 text-center text-sm text-gray-500 italic">Tidak ada rincian MSISDN untuk transaksi ini.</td>
+                  <td colspan="3" class="px-6 py-8 text-center text-sm text-gray-500 italic">Tidak ada rincian MSISDN untuk transaksi ini.</td>
                 </tr>
                 <tr v-for="(detail, index) in report.msisdn_list" :key="index" class="hover:bg-gray-50 transition-colors">
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 font-mono">{{ detail.msisdn }}</td>
@@ -157,19 +157,39 @@ const statusColors = {
                       {{ detail.type.replace('_', ' ') }}
                     </span>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span :class="['px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full capitalize border', 
-                      detail.validation_status === 'valid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                      detail.validation_status === 'invalid' ? 'bg-red-50 text-red-700 border-red-200' :
-                      'bg-yellow-50 text-yellow-700 border-yellow-200'
-                    ]">
-                      {{ detail.validation_status }}
-                    </span>
-                  </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ detail.transaction_date }}</td>
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <!-- MSISDN Details List (Mobile View) -->
+          <div class="md:hidden flex flex-col divide-y divide-gray-100 bg-gray-50/50">
+            <div v-if="report.msisdn_list.length === 0" class="p-6 text-center text-sm text-gray-500 italic">
+              Tidak ada rincian MSISDN untuk transaksi ini.
+            </div>
+            
+            <div v-for="(detail, index) in report.msisdn_list" :key="'mob-'+index" class="p-4 flex flex-col gap-3">
+              <div class="flex justify-between items-start">
+                <div>
+                  <div class="text-xs text-gray-500 uppercase font-semibold tracking-wider mb-1">No. HP (MSISDN)</div>
+                  <div class="text-base font-bold text-gray-900 font-mono">{{ detail.msisdn }}</div>
+                </div>
+              </div>
+              
+              <div class="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                <div>
+                  <div class="text-[10px] text-gray-400 uppercase font-semibold mb-0.5">Tipe Transaksi</div>
+                  <span class="inline-flex items-center text-xs font-medium text-gray-700 capitalize">
+                    {{ detail.type.replace('_', ' ') }}
+                  </span>
+                </div>
+                <div class="text-right">
+                  <div class="text-[10px] text-gray-400 uppercase font-semibold mb-0.5">Waktu</div>
+                  <span class="text-xs font-medium text-gray-700">{{ detail.transaction_date }}</span>
+                </div>
+              </div>
+            </div>
           </div>
 
         </div>

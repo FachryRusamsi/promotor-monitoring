@@ -39,11 +39,11 @@ return new class extends Migration
             $table->unsignedInteger('jml_aktivasi_gemini')->default(0)
                 ->comment('Jumlah aktivasi Gemini');
 
-            $table->string('foto_edukasi')->nullable()
-                ->comment('Path foto bukti edukasi');
+            $table->json('foto_edukasi')->nullable()
+                ->comment('Array path foto bukti edukasi');
 
-            $table->string('foto_penjualan')->nullable()
-                ->comment('Path foto bukti penjualan');
+            $table->json('foto_penjualan')->nullable()
+                ->comment('Array path foto bukti penjualan');
 
             $table->decimal('latitude', 10, 7)->nullable();
 

@@ -55,8 +55,10 @@ class TransactionController extends Controller
             'jml_pulsa' => 'required|integer|min:0|max:1000',
             'jml_aktivasi_gemini' => 'required|integer|min:0|max:1000',
 
-            'foto_edukasi' => 'nullable|image|mimes:jpeg,png,jpg|max:10240',
-            'foto_penjualan' => 'nullable|image|mimes:jpeg,png,jpg|max:10240',
+            'foto_edukasi' => 'nullable|array',
+            'foto_edukasi.*' => 'image|mimes:jpeg,png,jpg|max:10240',
+            'foto_penjualan' => 'nullable|array',
+            'foto_penjualan.*' => 'image|mimes:jpeg,png,jpg|max:10240',
 
             'msisdns' => 'nullable|array',
             'msisdns.*.number' => [
@@ -67,15 +69,44 @@ class TransactionController extends Controller
             'msisdns.*.notes' => 'nullable|string',
         ]);
 
+        // Fraud Validation: Ensure the number of MSISDNs matches the claimed aggregate numbers
+        $msisdnCollection = collect($normalizedMsisdns);
+        $countSp = $msisdnCollection->where('type', 'starter_pack')->count();
+        $countPulsa = $msisdnCollection->where('type', 'reload')->count();
+        $countGemini = $msisdnCollection->where('type', 'gemini_activation')->count();
+
+        $fraudErrors = [];
+        if ($countSp != $request->jml_sp) {
+            $fraudErrors[] = "SP (diinput: $countSp nomor, total klaim: {$request->jml_sp})";
+        }
+        if ($countPulsa != $request->jml_pulsa) {
+            $fraudErrors[] = "Pulsa (diinput: $countPulsa nomor, total klaim: {$request->jml_pulsa})";
+        }
+        if ($countGemini != $request->jml_aktivasi_gemini) {
+            $fraudErrors[] = "Gemini (diinput: $countGemini nomor, total klaim: {$request->jml_aktivasi_gemini})";
+        }
+
+        if (!empty($fraudErrors)) {
+            return back()->withErrors([
+                'msisdns' => 'Peringatan Fraud: Rincian nomor tidak cocok dengan angka penjualan! Detail: ' . implode(' | ', $fraudErrors)
+            ])->withInput();
+        }
+
         $user = $request->user();
 
-        $pathEdukasi = $request->hasFile('foto_edukasi')
-            ? $request->file('foto_edukasi')->store('transactions/edukasi', 'public')
-            : null;
+        $pathEdukasi = [];
+        if ($request->hasFile('foto_edukasi')) {
+            foreach ($request->file('foto_edukasi') as $file) {
+                $pathEdukasi[] = $file->store('transactions/edukasi', 'public');
+            }
+        }
 
-        $pathPenjualan = $request->hasFile('foto_penjualan')
-            ? $request->file('foto_penjualan')->store('transactions/penjualan', 'public')
-            : null;
+        $pathPenjualan = [];
+        if ($request->hasFile('foto_penjualan')) {
+            foreach ($request->file('foto_penjualan') as $file) {
+                $pathPenjualan[] = $file->store('transactions/penjualan', 'public');
+            }
+        }
 
         $attendance = $user->attendances()
             ->whereDate('work_date', now()->toDateString())

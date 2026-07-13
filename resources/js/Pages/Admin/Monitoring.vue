@@ -185,25 +185,25 @@ onUnmounted(() => {
     <template #header>Daftar Promotor</template>
 
     <div class="p-4 md:p-6 h-full flex flex-col">
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <div>
-            <h2 class="text-2xl font-bold text-gray-800">Daftar Promotor</h2>
-            <p class="text-sm text-gray-500">Pilih promotor untuk melihat detail & live location</p>
+            <h2 class="text-xl md:text-2xl font-bold text-gray-800">Daftar Promotor</h2>
+            <p class="text-xs md:text-sm text-gray-500">Pilih promotor untuk melihat detail & live location</p>
           </div>
           
-          <div class="flex items-center gap-3">
+          <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
             <!-- Filter Dropdowns -->
-            <select v-model="selectedRegion" class="rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            <select v-model="selectedRegion" class="w-full md:w-auto rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
               <option value="">Semua Region</option>
               <option v-for="region in regions" :key="region.id" :value="region.id">{{ region.name }}</option>
             </select>
             
-            <select v-model="selectedArea" :disabled="!selectedRegion" class="rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100">
+            <select v-model="selectedArea" :disabled="!selectedRegion" class="w-full md:w-auto rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100">
               <option value="">Semua Branch</option>
               <option v-for="area in availableAreas" :key="area.id" :value="area.id">{{ area.name }}</option>
             </select>
 
-            <div class="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 border border-emerald-100 ml-4">
+            <div class="w-full md:w-auto bg-emerald-50 text-emerald-700 px-4 py-2 rounded-full text-xs md:text-sm font-medium flex items-center justify-center gap-2 border border-emerald-100">
               <span class="relative flex h-3 w-3">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>

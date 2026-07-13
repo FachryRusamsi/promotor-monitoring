@@ -31,6 +31,8 @@ class Transaction extends Model
             'transaction_date' => 'date',
             'latitude'         => 'decimal:7',
             'longitude'        => 'decimal:7',
+            'foto_edukasi'     => 'array',
+            'foto_penjualan'   => 'array',
         ];
     }
 

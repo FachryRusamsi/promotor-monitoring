@@ -21,3 +21,8 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+cloudflared*
+*.exe
+*_run.txt
+update_dates.php

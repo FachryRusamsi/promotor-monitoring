@@ -133,11 +133,17 @@ watch([selectedRegion, selectedArea, startDate, endDate], ([newRegion, newArea, 
                     <p class="text-sm text-gray-500">Filter berdasarkan region, branch, atau rentang waktu.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto">
-                    <input type="date" v-model="startDate" class="w-full md:w-36 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <div class="flex items-center gap-2 w-full md:w-auto">
+                        <span class="text-xs text-gray-500 font-medium whitespace-nowrap min-w-[3rem] md:min-w-0">Mulai:</span>
+                        <input type="date" v-model="startDate" class="flex-1 md:w-36 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    </div>
                     <span class="text-gray-400 hidden md:inline">-</span>
-                    <input type="date" v-model="endDate" class="w-full md:w-36 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <div class="flex items-center gap-2 w-full md:w-auto">
+                        <span class="text-xs text-gray-500 font-medium whitespace-nowrap min-w-[3rem] md:min-w-0">Hingga:</span>
+                        <input type="date" v-model="endDate" class="flex-1 md:w-36 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    </div>
                     
-                    <select v-model="selectedRegion" class="w-full md:w-44 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <select v-model="selectedRegion" class="w-full md:w-44 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm mt-2 md:mt-0">
                         <option value="">Semua Region (Nasional)</option>
                         <option v-for="region in regions" :key="region.id" :value="region.id">
                             {{ region.name }}
@@ -256,59 +262,96 @@ watch([selectedRegion, selectedArea, startDate, endDate], ([newRegion, newArea, 
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-gray-50 border-b border-gray-100 text-sm font-semibold text-gray-600">
-                                <th class="py-4 px-6">Nama Promotor</th>
-                                <th class="py-4 px-6">Region / Branch</th>
-                                <th class="py-4 px-6 text-right">Total Edukasi</th>
-                                <th class="py-4 px-6 text-right">Total Starter Pack</th>
-                                <th class="py-4 px-6 text-right">Total Pulsa</th>
-                                <th class="py-4 px-6 text-right">Aktivasi Gemini</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            <tr v-for="promotor in allPromotors" :key="promotor.id" class="hover:bg-gray-50 transition-colors">
-                                <td class="py-4 px-6">
-                                    <div class="font-medium text-gray-800">{{ promotor.name }}</div>
-                                </td>
-                                <td class="py-4 px-6">
-                                    <div class="text-sm text-gray-600">
-                                        <span class="block">{{ promotor.region_name || '-' }}</span>
-                                        <span class="block text-xs text-gray-400">{{ promotor.area_name || '-' }}</span>
-                                    </div>
-                                </td>
-                                <td class="py-4 px-6 text-right">
-                                    <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 font-semibold w-16">
-                                        {{ promotor.total_edukasi }}
-                                    </span>
-                                </td>
-                                <td class="py-4 px-6 text-right">
-                                    <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 font-semibold w-16">
-                                        {{ promotor.total_sp }}
-                                    </span>
-                                </td>
-                                <td class="py-4 px-6 text-right">
-                                    <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 font-semibold w-16">
-                                        {{ promotor.total_pulsa }}
-                                    </span>
-                                </td>
-                                <td class="py-4 px-6 text-right">
-                                    <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 font-semibold w-16">
-                                        {{ promotor.total_gemini }}
-                                    </span>
-                                </td>
-                            </tr>
-                            <tr v-if="allPromotors.length === 0">
-                                <td colspan="6" class="py-8 text-center text-gray-500">
-                                    Tidak ada data promotor yang sesuai dengan filter.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <!-- DESKTOP TABLE VIEW (Hidden on Mobile) -->
+                    <div class="hidden md:block overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 border-b border-gray-100 text-sm font-semibold text-gray-600">
+                                    <th class="py-4 px-6">Nama Promotor</th>
+                                    <th class="py-4 px-6">Region / Branch</th>
+                                    <th class="py-4 px-6 text-right">Total Edukasi</th>
+                                    <th class="py-4 px-6 text-right">Total Starter Pack</th>
+                                    <th class="py-4 px-6 text-right">Total Pulsa</th>
+                                    <th class="py-4 px-6 text-right">Aktivasi Gemini</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <tr v-for="promotor in allPromotors" :key="promotor.id" class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-4 px-6">
+                                        <div class="font-medium text-gray-800">{{ promotor.name }}</div>
+                                    </td>
+                                    <td class="py-4 px-6">
+                                        <div class="text-sm text-gray-600">
+                                            <span class="block">{{ promotor.region_name || '-' }}</span>
+                                            <span class="block text-xs text-gray-400">{{ promotor.area_name || '-' }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6 text-right">
+                                        <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 font-semibold w-16">
+                                            {{ promotor.total_edukasi }}
+                                        </span>
+                                    </td>
+                                    <td class="py-4 px-6 text-right">
+                                        <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 font-semibold w-16">
+                                            {{ promotor.total_sp }}
+                                        </span>
+                                    </td>
+                                    <td class="py-4 px-6 text-right">
+                                        <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 font-semibold w-16">
+                                            {{ promotor.total_pulsa }}
+                                        </span>
+                                    </td>
+                                    <td class="py-4 px-6 text-right">
+                                        <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 font-semibold w-16">
+                                            {{ promotor.total_gemini }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr v-if="allPromotors.length === 0">
+                                    <td colspan="6" class="py-8 text-center text-gray-500">
+                                        Tidak ada data promotor yang sesuai dengan filter.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- MOBILE CARD VIEW (Hidden on Desktop) -->
+                    <div class="md:hidden flex flex-col p-4 gap-4 bg-gray-50">
+                        <div v-for="promotor in allPromotors" :key="'mob-'+promotor.id" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                            <div class="border-b border-gray-100 pb-3 mb-3">
+                                <h4 class="font-bold text-gray-900">{{ promotor.name }}</h4>
+                                <p class="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    {{ promotor.region_name || '-' }}, {{ promotor.area_name || '-' }}
+                                </p>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-indigo-50/50 rounded-lg p-2 flex flex-col items-center justify-center text-center">
+                                    <span class="text-[10px] uppercase font-semibold text-indigo-400 mb-1">Edukasi</span>
+                                    <span class="text-lg font-bold text-indigo-700">{{ promotor.total_edukasi }}</span>
+                                </div>
+                                <div class="bg-emerald-50/50 rounded-lg p-2 flex flex-col items-center justify-center text-center">
+                                    <span class="text-[10px] uppercase font-semibold text-emerald-400 mb-1">Starter Pack</span>
+                                    <span class="text-lg font-bold text-emerald-700">{{ promotor.total_sp }}</span>
+                                </div>
+                                <div class="bg-blue-50/50 rounded-lg p-2 flex flex-col items-center justify-center text-center">
+                                    <span class="text-[10px] uppercase font-semibold text-blue-400 mb-1">Pulsa</span>
+                                    <span class="text-lg font-bold text-blue-700">{{ promotor.total_pulsa }}</span>
+                                </div>
+                                <div class="bg-purple-50/50 rounded-lg p-2 flex flex-col items-center justify-center text-center">
+                                    <span class="text-[10px] uppercase font-semibold text-purple-400 mb-1">Gemini</span>
+                                    <span class="text-lg font-bold text-purple-700">{{ promotor.total_gemini }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div v-if="allPromotors.length === 0" class="text-center text-gray-500 py-8 bg-white rounded-xl border border-gray-100">
+                            Tidak ada data promotor.
+                        </div>
+                    </div>
                 </div>
-            </div>
             
             <!-- Rankings (Hidden when showAllPromotors is true) -->
             <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6">

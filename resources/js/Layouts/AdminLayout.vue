@@ -8,16 +8,25 @@ const sidebarOpen = ref(false);
 <template>
     <div class="relative flex h-screen bg-[#F8F9FA] overflow-hidden">
 
+        <!-- Mobile Backdrop -->
+        <div 
+            v-if="sidebarOpen" 
+            @click="sidebarOpen = false" 
+            class="fixed inset-0 z-20 bg-gray-900/50 transition-opacity md:hidden"
+        ></div>
+
         <!-- Sidebar -->
         <aside
-            class="absolute inset-y-0 left-0 z-20 flex h-full flex-col justify-between overflow-hidden border-r border-gray-200 bg-white shadow-lg transition-all duration-200"
-            :class="sidebarOpen ? 'w-80' : 'w-16'"
+            class="absolute inset-y-0 left-0 z-30 flex h-full flex-col justify-between overflow-hidden border-r border-gray-200 bg-white shadow-lg transition-all duration-300 md:z-20 md:translate-x-0"
+            :class="[
+                sidebarOpen ? 'w-72 translate-x-0' : '-translate-x-full w-72 md:w-16 md:translate-x-0'
+            ]"
             @mouseenter="sidebarOpen = true"
             @mouseleave="sidebarOpen = false"
         >
             <div
                 v-show="!sidebarOpen"
-                class="flex h-full flex-col justify-between transition-all duration-150 ease-in-out"
+                class="hidden md:flex h-full flex-col justify-between transition-all duration-150 ease-in-out"
             >
                 <div class="space-y-2">
                     <div class="flex items-center justify-center p-4">
@@ -65,30 +74,42 @@ const sidebarOpen = ref(false);
             </div>
 
             <div
-                v-show="sidebarOpen"
-                class="flex h-full flex-col transition-all duration-150 ease-in-out"
+                v-show="sidebarOpen || !sidebarOpen"
+                :class="sidebarOpen ? 'flex' : 'hidden md:hidden'"
+                class="h-full flex-col transition-all duration-150 ease-in-out"
             >
-                <div class="px-8 py-7 border-b border-gray-100">
+                <!-- Close Button on Mobile -->
+                <button 
+                    @click="sidebarOpen = false"
+                    class="absolute top-4 right-4 p-2 text-gray-500 hover:text-gray-800 md:hidden"
+                >
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
+                <div class="px-6 py-6 border-b border-gray-100">
                     <div class="flex items-center gap-3">
                         <img
                             src="/image/logos/Logo IOH-Color.png"
                             alt="Indosat Logo"
-                            class="h-12 w-12 object-contain"
+                            class="h-10 w-10 object-contain"
                         />
-                        <div class="space-y-1">
-                            <h1 class="font-semibold text-gray-900 text-base leading-tight">
+                        <div class="space-y-0.5 mt-1">
+                            <h1 class="font-semibold text-gray-900 text-sm leading-tight">
                                 Promotor Monitoring
                             </h1>
-                            <p class="text-sm text-gray-500 leading-relaxed">
-                                Indosat Internal Dashboard
+                            <p class="text-xs text-gray-500 leading-relaxed">
+                                Indosat Dashboard
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <nav class="flex-1 px-5 py-6 space-y-2">
+                <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
                     <Link
                         :href="route('admin.dashboard')"
+                        @click="sidebarOpen = false"
                         :class="[
                             'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
                             route().current('admin.dashboard')
@@ -105,6 +126,7 @@ const sidebarOpen = ref(false);
 
                     <Link
                         :href="route('admin.monitoring')"
+                        @click="sidebarOpen = false"
                         :class="[
                             'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
                             route().current('admin.monitoring')
@@ -121,6 +143,7 @@ const sidebarOpen = ref(false);
 
                     <Link
                         :href="route('admin.reports.index')"
+                        @click="sidebarOpen = false"
                         :class="[
                             'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
                             route().current('admin.reports.index')
@@ -140,6 +163,7 @@ const sidebarOpen = ref(false);
                     <div class="flex flex-col gap-2">
                         <Link
                             :href="route('profile.edit')"
+                            @click="sidebarOpen = false"
                             class="flex items-center gap-3 rounded-xl px-4 py-3 text-gray-600 transition hover:bg-gray-100"
                         >
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,7 +177,7 @@ const sidebarOpen = ref(false);
                             method="post"
                             as="button"
                             :href="route('logout')"
-                            class="flex items-center gap-3 rounded-xl px-4 py-3 text-red-600 transition hover:bg-red-50"
+                            class="flex items-center gap-3 rounded-xl px-4 py-3 text-red-600 transition hover:bg-red-50 w-full"
                         >
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -167,26 +191,37 @@ const sidebarOpen = ref(false);
         </aside>
 
         <!-- Main -->
-        <main class="ml-16 flex-1 flex flex-col overflow-hidden">
+        <main class="flex-1 flex flex-col overflow-hidden transition-all duration-300 ml-0 md:ml-16">
 
             <!-- Header -->
-            <header class="bg-white border-b border-gray-200 px-8 py-5 flex items-center justify-between">
+            <header class="bg-white border-b border-gray-200 px-4 md:px-8 py-4 flex items-center justify-between z-10 shadow-sm md:shadow-none">
 
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">
-                        <slot name="header">
-                            Dashboard
-                        </slot>
-                    </h1>
+                <div class="flex items-center gap-3">
+                    <!-- Hamburger Menu (Mobile Only) -->
+                    <button 
+                        @click="sidebarOpen = true"
+                        class="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-lg md:hidden"
+                    >
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
 
-                    <p class="text-sm text-gray-500 mt-1">
-                        Indosat Promotor Monitoring System
-                    </p>
+                    <div>
+                        <h1 class="text-lg md:text-2xl font-bold text-gray-900 leading-tight">
+                            <slot name="header">
+                                Dashboard
+                            </slot>
+                        </h1>
+                        <p class="text-xs md:text-sm text-gray-500 mt-0.5 hidden md:block">
+                            Indosat Promotor Monitoring System
+                        </p>
+                    </div>
                 </div>
 
-                <div class="flex items-center gap-4">
-                    <div class="text-right">
-                        <p class="font-semibold text-gray-800">
+                <div class="flex items-center gap-3 md:gap-4">
+                    <div class="text-right hidden sm:block">
+                        <p class="font-semibold text-gray-800 text-sm md:text-base">
                             {{ $page.props.auth.user.name }}
                         </p>
                         <p class="text-xs text-gray-500">
@@ -194,14 +229,14 @@ const sidebarOpen = ref(false);
                         </p>
                     </div>
 
-                    <div class="w-11 h-11 rounded-full bg-[#ED1C24] text-white flex items-center justify-center font-bold shadow">
+                    <div class="w-9 h-9 md:w-11 md:h-11 rounded-full bg-[#ED1C24] text-white flex items-center justify-center font-bold shadow text-sm md:text-base">
                         {{ $page.props.auth.user.name.charAt(0).toUpperCase() }}
                     </div>
                 </div>
             </header>
 
             <!-- Content -->
-            <section class="flex-1 overflow-auto p-8 bg-[#F8F9FA]">
+            <section class="flex-1 overflow-auto p-4 md:p-8 bg-[#F8F9FA]">
                 <slot />
             </section>
         </main>
