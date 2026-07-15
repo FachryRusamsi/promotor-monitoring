@@ -62,13 +62,21 @@ class DashboardController extends Controller
 
         // Ranking Region (Semua region)
         $regionRankings = Region::withSum(['transactions as total_sales' => $transactionFilter], DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'))
+            ->withSum(['transactions as total_edukasi' => $transactionFilter], 'jml_edukasi')
+            ->withSum(['transactions as total_sp' => $transactionFilter], 'jml_sp')
+            ->withSum(['transactions as total_pulsa' => $transactionFilter], 'jml_pulsa')
+            ->withSum(['transactions as total_gemini' => $transactionFilter], 'jml_aktivasi_gemini')
             ->orderByDesc('total_sales')
             ->get()
             ->map(function($region) {
                 return [
                     'id' => $region->id,
                     'name' => $region->name,
-                    'total_sales' => $region->total_sales ?? 0
+                    'total_sales' => (int) ($region->total_sales ?? 0),
+                    'total_edukasi' => (int) ($region->total_edukasi ?? 0),
+                    'total_sp' => (int) ($region->total_sp ?? 0),
+                    'total_pulsa' => (int) ($region->total_pulsa ?? 0),
+                    'total_gemini' => (int) ($region->total_gemini ?? 0),
                 ];
             });
 
@@ -129,14 +137,40 @@ class DashboardController extends Controller
             $allPromotorsQuery->where('area_id', $areaId);
         }
 
-        $allPromotors = $allPromotorsQuery->get()->map(function($user) {
+        $allPromotors = $allPromotorsQuery->with(['region', 'area'])->get()->map(function($user) {
             return [
                 'id' => $user->id,
                 'name' => $user->name,
+                'region_name' => $user->region->name ?? '-',
+                'area_name' => $user->area->name ?? '-',
+                'total_sales' => (int) (($user->total_edukasi ?? 0) + ($user->total_sp ?? 0) + ($user->total_pulsa ?? 0) + ($user->total_gemini ?? 0)),
                 'total_edukasi' => (int) ($user->total_edukasi ?? 0),
                 'total_sp' => (int) ($user->total_sp ?? 0),
                 'total_pulsa' => (int) ($user->total_pulsa ?? 0),
                 'total_gemini' => (int) ($user->total_gemini ?? 0),
+            ];
+        });
+
+        // All Branches KPI breakdown (for dynamic chart)
+        $allBranchesQuery = Area::withSum(['transactions as total_sales' => $transactionFilter], DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'))
+            ->withSum(['transactions as total_edukasi' => $transactionFilter], 'jml_edukasi')
+            ->withSum(['transactions as total_sp' => $transactionFilter], 'jml_sp')
+            ->withSum(['transactions as total_pulsa' => $transactionFilter], 'jml_pulsa')
+            ->withSum(['transactions as total_gemini' => $transactionFilter], 'jml_aktivasi_gemini');
+
+        if ($regionId) {
+            $allBranchesQuery->where('region_id', $regionId);
+        }
+
+        $allBranches = $allBranchesQuery->get()->map(function($branch) {
+            return [
+                'id' => $branch->id,
+                'name' => $branch->name,
+                'total_sales' => (int) ($branch->total_sales ?? 0),
+                'total_edukasi' => (int) ($branch->total_edukasi ?? 0),
+                'total_sp' => (int) ($branch->total_sp ?? 0),
+                'total_pulsa' => (int) ($branch->total_pulsa ?? 0),
+                'total_gemini' => (int) ($branch->total_gemini ?? 0),
             ];
         });
 
@@ -151,6 +185,7 @@ class DashboardController extends Controller
             'kpi' => $kpi,
             'regionRankings' => $regionRankings,
             'topBranches' => $topBranches,
+            'allBranches' => $allBranches,
             'topPromotors' => $topPromotors,
             'allPromotors' => $allPromotors,
         ]);
@@ -195,5 +230,41 @@ class DashboardController extends Controller
                 'area_id' => $areaId,
             ]
         ]);
+    }
+
+    public function promotorTransactions(Request $request, User $user)
+    {
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        $query = $user->transactions()->with('details');
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('transaction_date', [$startDate, $endDate]);
+        } elseif ($startDate) {
+            $query->whereDate('transaction_date', '>=', $startDate);
+        } elseif ($endDate) {
+            $query->whereDate('transaction_date', '<=', $endDate);
+        }
+
+        $transactions = $query->orderBy('created_at', 'desc')->get()->map(function($trx) {
+            return [
+                'id' => $trx->id,
+                'transaction_date' => $trx->transaction_date,
+                'created_at' => $trx->created_at->format('Y-m-d H:i:s'),
+                'jml_edukasi' => $trx->jml_edukasi,
+                'jml_sp' => $trx->jml_sp,
+                'jml_pulsa' => $trx->jml_pulsa,
+                'jml_aktivasi_gemini' => $trx->jml_aktivasi_gemini,
+                'foto_edukasi' => $trx->foto_edukasi,
+                'foto_penjualan' => $trx->foto_penjualan,
+                'latitude' => $trx->latitude,
+                'longitude' => $trx->longitude,
+                'location_name' => $trx->location_name,
+                'details' => $trx->details,
+            ];
+        });
+
+        return response()->json($transactions);
     }
 }

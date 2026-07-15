@@ -21,6 +21,7 @@ class Transaction extends Model
         'foto_penjualan',
         'latitude',
         'longitude',
+        'location_name',
         'validation_status',
         'validation_notes',
     ];

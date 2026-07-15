@@ -17,14 +17,15 @@ class ReportController extends Controller
     {
         $regionId = $request->query('region_id');
         $areaId = $request->query('area_id');
+        $date = $request->query('date', today()->toDateString());
 
         $transactions = Transaction::with([
-                'user.attendances' => function($q) {
-                    $q->whereDate('work_date', today());
+                'user.attendances' => function($q) use ($date) {
+                    $q->whereDate('work_date', $date);
                 },
                 'details',
             ])
-            ->whereDate('transaction_date', today())
+            ->whereDate('transaction_date', $date)
             ->when($regionId, function($q) use ($regionId) {
                 $q->whereHas('user', fn($u) => $u->where('region_id', $regionId));
             })
@@ -78,7 +79,7 @@ class ReportController extends Controller
 
         return Inertia::render('Admin/Report', [
             'reports' => $reportData,
-            'date' => today()->toDateString(),
+            'date' => $date,
             'regions' => Region::with('areas')->get(),
             'currentFilters' => [
                 'region_id' => $regionId,

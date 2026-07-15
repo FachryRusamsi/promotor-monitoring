@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { watch } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
+import Dropdown from '@/Components/Dropdown.vue';
+import DropdownLink from '@/Components/DropdownLink.vue';
 import Swal from 'sweetalert2';
 
 const page = usePage();
@@ -38,9 +40,22 @@ watch(() => page.props.flash, (flash: any) => {
                 <h1 class="text-lg font-bold">
                     <slot name="header">PromotorApp</slot>
                 </h1>
-                <Link :href="route('profile.edit')" class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                </Link>
+                <Dropdown align="right" width="48">
+                    <template #trigger>
+                        <button class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-800">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                        </button>
+                    </template>
+                    <template #content>
+                        <div class="px-4 py-3 border-b border-gray-100">
+                            <p class="text-sm font-medium text-gray-900 truncate">{{ $page.props.auth.user.name }}</p>
+                            <p class="text-xs text-gray-500 truncate">{{ $page.props.auth.user.phone }}</p>
+                        </div>
+                        <DropdownLink :href="route('logout')" method="post" as="button" class="text-red-600 font-medium">
+                            Log Out
+                        </DropdownLink>
+                    </template>
+                </Dropdown>
             </div>
         </header>
 
@@ -49,12 +64,25 @@ watch(() => page.props.flash, (flash: any) => {
             <!-- Desktop Header Simulation -->
             <div class="hidden md:flex bg-slate-800 text-white h-16 items-center px-6 justify-between">
                 <h1 class="text-xl font-bold"><slot name="header">PromotorApp</slot></h1>
-                <Link :href="route('profile.edit')" class="flex items-center gap-2 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors">
-                    <span class="text-sm">{{ $page.props.auth.user.name }}</span>
-                    <div class="w-8 h-8 rounded-full bg-white text-slate-800 flex items-center justify-center font-bold">
-                        {{ $page.props.auth.user.name.charAt(0) }}
-                    </div>
-                </Link>
+                <Dropdown align="right" width="48">
+                    <template #trigger>
+                        <button class="flex items-center gap-2 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors focus:outline-none">
+                            <span class="text-sm">{{ $page.props.auth.user.name }}</span>
+                            <div class="w-8 h-8 rounded-full bg-white text-slate-800 flex items-center justify-center font-bold">
+                                {{ $page.props.auth.user.name.charAt(0) }}
+                            </div>
+                        </button>
+                    </template>
+                    <template #content>
+                        <div class="px-4 py-3 border-b border-gray-100">
+                            <p class="text-sm font-medium text-gray-900 truncate">{{ $page.props.auth.user.name }}</p>
+                            <p class="text-xs text-gray-500 truncate">{{ $page.props.auth.user.phone }}</p>
+                        </div>
+                        <DropdownLink :href="route('logout')" method="post" as="button" class="text-red-600 font-medium">
+                            Log Out
+                        </DropdownLink>
+                    </template>
+                </Dropdown>
             </div>
             
             <div class="w-full relative">
@@ -71,6 +99,10 @@ watch(() => page.props.flash, (flash: any) => {
                     <Link :href="route('promotor.attendance.index')" :class="['flex flex-col items-center p-2 rounded-xl w-24 transition-colors', route().current('promotor.attendance.*') ? 'text-indigo-600 bg-indigo-50' : 'text-gray-500 hover:bg-gray-100']">
                         <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         <span class="text-xs font-medium">Absen</span>
+                    </Link>
+                    <Link :href="route('promotor.edukasi.index')" :class="['flex flex-col items-center p-2 rounded-xl w-24 transition-colors', route().current('promotor.edukasi.*') ? 'text-indigo-600 bg-indigo-50' : 'text-gray-500 hover:bg-gray-100']">
+                        <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7" /></svg>
+                        <span class="text-xs font-medium">Edukasi</span>
                     </Link>
                     <Link :href="route('promotor.transactions.index')" :class="['flex flex-col items-center p-2 rounded-xl w-24 transition-colors', route().current('promotor.transactions.*') ? 'text-indigo-600 bg-indigo-50' : 'text-gray-500 hover:bg-gray-100']">
                         <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
@@ -96,6 +128,13 @@ watch(() => page.props.flash, (flash: any) => {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span class="text-[10px] font-medium">Absen</span>
+                </Link>
+
+                <Link :href="route('promotor.edukasi.index')" :class="['flex flex-col items-center justify-center w-full h-full space-y-1', route().current('promotor.edukasi.*') ? 'text-indigo-600' : 'text-gray-500']">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7" />
+                    </svg>
+                    <span class="text-[10px] font-medium">Edukasi</span>
                 </Link>
 
                 <Link :href="route('promotor.transactions.index')" :class="['flex flex-col items-center justify-center w-full h-full space-y-1', route().current('promotor.transactions.*') ? 'text-indigo-600' : 'text-gray-500']">

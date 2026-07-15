@@ -21,91 +21,47 @@ class TransactionController extends Controller
     public function store(Request $request)
     {
         // Normalisasi MSISDN
-        $normalizedMsisdns = [];
-
-        if ($request->has('msisdns') && is_array($request->input('msisdns'))) {
-            foreach ($request->input('msisdns') as $item) {
-
-                if (isset($item['number'])) {
-
-                    $num = preg_replace('/\D/', '', $item['number']);
-
-                    if (str_starts_with($num, '62')) {
-                        $num = '0' . substr($num, 2);
-                    } elseif (str_starts_with($num, '8')) {
-                        $num = '0' . $num;
-                    } elseif (!str_starts_with($num, '0')) {
-                        $num = '0' . $num;
-                    }
-
-                    $item['number'] = $num;
-                }
-
-                $normalizedMsisdns[] = $item;
+        $msisdn = $request->input('msisdn');
+        if ($msisdn) {
+            $num = preg_replace('/\D/', '', $msisdn);
+            if (str_starts_with($num, '62')) {
+                $num = '0' . substr($num, 2);
+            } elseif (str_starts_with($num, '8')) {
+                $num = '0' . $num;
+            } elseif (!str_starts_with($num, '0')) {
+                $num = '0' . $num;
             }
-
-            $request->merge([
-                'msisdns' => $normalizedMsisdns
-            ]);
+            $request->merge(['msisdn' => $num]);
         }
 
         $request->validate([
-            'jml_edukasi' => 'required|integer|min:0|max:1000',
-            'jml_sp' => 'required|integer|min:0|max:1000',
-            'jml_pulsa' => 'required|integer|min:0|max:1000',
-            'jml_aktivasi_gemini' => 'required|integer|min:0|max:1000',
-
-            'foto_edukasi' => 'nullable|array',
-            'foto_edukasi.*' => 'image|mimes:jpeg,png,jpg|max:10240',
-            'foto_penjualan' => 'nullable|array',
-            'foto_penjualan.*' => 'image|mimes:jpeg,png,jpg|max:10240',
-
-            'msisdns' => 'nullable|array',
-            'msisdns.*.number' => [
+            'msisdn' => [
                 'required',
-                'regex:/^08[0-9]{8,11}$/'
+                'regex:/^(0814|0815|0816|0855|0856|0857|0858|0895|0896|0897|0898|0899)[0-9]{4,11}$/'
             ],
-            'msisdns.*.type' => 'required|in:starter_pack,reload,gemini_activation',
-            'msisdns.*.notes' => 'nullable|string',
+            'type' => 'required|in:starter_pack,reload,gemini_activation',
+            'notes' => 'nullable|string',
+            'foto_penjualan' => 'required|image|mimes:jpeg,png,jpg|max:10240',
+            
+            'latitude' => 'nullable|numeric',
+            'longitude' => 'nullable|numeric',
+            'location_name' => 'required|string|max:255',
+        ], [
+            'msisdn.regex' => 'Nomor HP harus diawali dengan prefix Indosat/Tri yang valid.',
+            'location_name.required' => 'Keterangan lokasi wajib diisi.'
         ]);
-
-        // Fraud Validation: Ensure the number of MSISDNs matches the claimed aggregate numbers
-        $msisdnCollection = collect($normalizedMsisdns);
-        $countSp = $msisdnCollection->where('type', 'starter_pack')->count();
-        $countPulsa = $msisdnCollection->where('type', 'reload')->count();
-        $countGemini = $msisdnCollection->where('type', 'gemini_activation')->count();
-
-        $fraudErrors = [];
-        if ($countSp != $request->jml_sp) {
-            $fraudErrors[] = "SP (diinput: $countSp nomor, total klaim: {$request->jml_sp})";
-        }
-        if ($countPulsa != $request->jml_pulsa) {
-            $fraudErrors[] = "Pulsa (diinput: $countPulsa nomor, total klaim: {$request->jml_pulsa})";
-        }
-        if ($countGemini != $request->jml_aktivasi_gemini) {
-            $fraudErrors[] = "Gemini (diinput: $countGemini nomor, total klaim: {$request->jml_aktivasi_gemini})";
-        }
-
-        if (!empty($fraudErrors)) {
-            return back()->withErrors([
-                'msisdns' => 'Peringatan Fraud: Rincian nomor tidak cocok dengan angka penjualan! Detail: ' . implode(' | ', $fraudErrors)
-            ])->withInput();
-        }
 
         $user = $request->user();
 
-        $pathEdukasi = [];
-        if ($request->hasFile('foto_edukasi')) {
-            foreach ($request->file('foto_edukasi') as $file) {
-                $pathEdukasi[] = $file->store('transactions/edukasi', 'public');
-            }
-        }
+        $type = $request->input('type');
+        $jml_sp = $type === 'starter_pack' ? 1 : 0;
+        $jml_pulsa = $type === 'reload' ? 1 : 0;
+        $jml_aktivasi_gemini = $type === 'gemini_activation' ? 1 : 0;
+        $jml_edukasi = 0; // Transaksi penjualan tidak mencampur data edukasi lagi
 
         $pathPenjualan = [];
         if ($request->hasFile('foto_penjualan')) {
-            foreach ($request->file('foto_penjualan') as $file) {
-                $pathPenjualan[] = $file->store('transactions/penjualan', 'public');
-            }
+            $pathPenjualan[] = $request->file('foto_penjualan')->store('transactions/penjualan', 'public');
         }
 
         $attendance = $user->attendances()
@@ -121,9 +77,11 @@ class TransactionController extends Controller
             $user,
             $outletId,
             $attendance,
-            $pathEdukasi,
             $pathPenjualan,
-            $normalizedMsisdns
+            $jml_edukasi,
+            $jml_sp,
+            $jml_pulsa,
+            $jml_aktivasi_gemini
         ) {
 
             $trx = Transaction::create([
@@ -132,25 +90,26 @@ class TransactionController extends Controller
                 'attendance_id' => $attendance?->id,
                 'transaction_date' => now()->toDateString(),
 
-                'jml_edukasi' => $request->jml_edukasi,
-                'jml_sp' => $request->jml_sp,
-                'jml_pulsa' => $request->jml_pulsa,
-                'jml_aktivasi_gemini' => $request->jml_aktivasi_gemini,
+                'jml_edukasi' => $jml_edukasi,
+                'jml_sp' => $jml_sp,
+                'jml_pulsa' => $jml_pulsa,
+                'jml_aktivasi_gemini' => $jml_aktivasi_gemini,
 
-                'foto_edukasi' => $pathEdukasi,
-                'foto_penjualan' => $pathPenjualan,
+                'foto_edukasi' => null,
+                'foto_penjualan' => empty($pathPenjualan) ? null : collect($pathPenjualan)->toJson(),
+                
+                'latitude' => $request->input('latitude'),
+                'longitude' => $request->input('longitude'),
+                'location_name' => $request->input('location_name'),
 
                 'validation_status' => 'pending',
             ]);
 
-            foreach ($normalizedMsisdns as $msisdn) {
-
-                $trx->details()->create([
-                    'msisdn' => $msisdn['number'],
-                    'type' => $msisdn['type'],
-                    'notes' => $msisdn['notes'] ?? null,
-                ]);
-            }
+            $trx->details()->create([
+                'msisdn' => $request->input('msisdn'),
+                'type' => $request->input('type'),
+                'notes' => $request->input('notes'),
+            ]);
 
             return $trx;
         });

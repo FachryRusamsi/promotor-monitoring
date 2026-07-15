@@ -184,7 +184,7 @@ onUnmounted(() => {
   <AdminLayout>
     <template #header>Daftar Promotor</template>
 
-    <div class="p-4 md:p-6 h-full flex flex-col">
+    <div class="p-4 md:p-6 pb-20">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <div>
             <h2 class="text-xl md:text-2xl font-bold text-gray-800">Daftar Promotor</h2>
@@ -213,32 +213,66 @@ onUnmounted(() => {
           </div>
         </div>
 
-      <!-- Grid Promotor -->
-      <div v-if="promotors.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-10">
-        <div 
-          v-for="promotor in promotors" 
-          :key="promotor.id"
-          @click="openModal(promotor)"
-          class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all group"
-        >
-          <div class="flex items-center gap-4">
-            <div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
-              {{ promotor.name.substring(0, 2).toUpperCase() }}
-            </div>
-            <div>
-              <h3 class="font-bold text-gray-800 text-lg line-clamp-1">{{ promotor.name }}</h3>
-              <div class="flex flex-col gap-1">
-                <p class="text-sm text-gray-500 flex items-center gap-1">
-                  <span :class="promotor.check_in_time ? 'text-green-500' : 'text-red-500'">●</span>
-                  {{ promotor.check_in_time ? `Masuk: ${promotor.check_in_time}` : 'Belum Absen' }}
-                </p>
-                <p class="text-sm text-gray-500 flex items-center gap-1">
-                  <span :class="promotor.check_out_time ? 'text-green-500' : 'text-gray-400'">●</span>
-                  {{ promotor.check_out_time ? `Keluar: ${promotor.check_out_time}` : 'Belum Keluar' }}
-                </p>
-              </div>
-            </div>
-          </div>
+      <!-- List Promotor -->
+      <div v-if="promotors.length > 0" class="mb-10 w-full">
+        <div class="overflow-x-auto">
+          <table class="min-w-full border-collapse">
+            <thead class="border-b-2 border-gray-200">
+              <tr>
+                <th scope="col" class="py-4 pr-6 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">No.</th>
+                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Nama Promotor</th>
+                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Jam Masuk</th>
+                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Jam Keluar</th>
+                <th scope="col" class="pl-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <tr 
+                v-for="(promotor, index) in promotors" 
+                :key="promotor.id"
+                @click="openModal(promotor)"
+                class="hover:bg-white transition-colors cursor-pointer group"
+              >
+                <td class="py-4 pr-6 whitespace-nowrap text-sm font-bold text-gray-500">
+                  {{ index + 1 }}.
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center gap-3">
+                    <div class="h-9 w-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs group-hover:bg-blue-100 transition-colors shrink-0">
+                      {{ promotor.name.substring(0, 2).toUpperCase() }}
+                    </div>
+                    <span class="font-bold text-gray-800 text-sm">{{ promotor.name }}</span>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span v-if="promotor.check_in_time" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700 border border-green-100">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                    {{ promotor.check_in_time }}
+                  </span>
+                  <span v-else class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-700 border border-red-100">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                    Belum Absen
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span v-if="promotor.check_out_time" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700 border border-green-100">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                    {{ promotor.check_out_time }}
+                  </span>
+                  <span v-else class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                    Belum Keluar
+                  </span>
+                </td>
+                <td class="pl-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <button class="text-indigo-600 hover:text-indigo-900 inline-flex items-center gap-1">
+                    Detail Lokasi
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
       

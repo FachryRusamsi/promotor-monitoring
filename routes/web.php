@@ -56,6 +56,9 @@ Route::prefix('admin')
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])
             ->name('dashboard');
             
+        Route::get('/promotor/{user}/transactions', [AdminDashboardController::class, 'promotorTransactions'])
+            ->name('promotor.transactions');
+            
         Route::get('/monitoring', [AdminDashboardController::class, 'monitoring'])
             ->name('monitoring');
 
@@ -108,6 +111,12 @@ Route::prefix('promotor')
 
         Route::post('/transactions', [TransactionController::class, 'store'])
             ->name('transactions.store');
+
+        Route::get('/edukasi', [\App\Http\Controllers\Promotor\EdukasiController::class, 'index'])
+            ->name('edukasi.index');
+
+        Route::post('/edukasi', [\App\Http\Controllers\Promotor\EdukasiController::class, 'store'])
+            ->name('edukasi.store');
     });
 
 require __DIR__.'/auth.php';

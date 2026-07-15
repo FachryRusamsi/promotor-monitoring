@@ -11,6 +11,8 @@ use App\Models\Attendance;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class TransactionValidationTest extends TestCase
@@ -59,16 +61,12 @@ class TransactionValidationTest extends TestCase
     public function test_msisdn_is_normalized_correctly_and_saved()
     {
         $payload = [
-            'jml_edukasi' => 1,
-            'jml_sp' => 1,
-            'jml_pulsa' => 0,
-            'jml_aktivasi_gemini' => 0,
-            'msisdns' => [
-                ['number' => '+62 858-1234-5678', 'type' => 'starter_pack'],
-                ['number' => '6285812345678', 'type' => 'reload'],
-                ['number' => '085812345678', 'type' => 'gemini_activation'],
-                ['number' => '85812345678', 'type' => 'starter_pack'], // No zero prefix
-            ]
+            'msisdn' => '+62 858-1234-5678',
+            'type' => 'starter_pack',
+            'location_name' => 'Outlet Cabang Test',
+            'latitude' => '-6.200000',
+            'longitude' => '106.816666',
+            'foto_penjualan' => UploadedFile::fake()->image('penjualan.jpg')
         ];
 
         $response = $this->actingAs($this->user)
@@ -78,29 +76,24 @@ class TransactionValidationTest extends TestCase
 
         $this->assertDatabaseHas('transactions', [
             'user_id' => $this->user->id,
-            'jml_edukasi' => 1,
+            'jml_sp' => 1,
+            'location_name' => 'Outlet Cabang Test'
         ]);
 
-        // Assert all variations normalized to exactly 085812345678
-        $this->assertDatabaseHas('transaction_details', ['msisdn' => '085812345678', 'type' => 'starter_pack']);
-        $this->assertDatabaseHas('transaction_details', ['msisdn' => '085812345678', 'type' => 'reload']);
-        $this->assertDatabaseHas('transaction_details', ['msisdn' => '085812345678', 'type' => 'gemini_activation']);
-        
-        $count = \App\Models\TransactionDetail::where('msisdn', '085812345678')->count();
-        $this->assertEquals(4, $count, 'All 4 variations should have been normalized to the same MSISDN.');
+        // Assert MSISDN is normalized
+        $this->assertDatabaseHas('transaction_details', [
+            'msisdn' => '085812345678', 
+            'type' => 'starter_pack'
+        ]);
     }
 
     public function test_it_rejects_msisdn_if_too_short_after_normalization()
     {
         $payload = [
-            'jml_edukasi' => 1,
-            'jml_sp' => 1,
-            'jml_pulsa' => 0,
-            'jml_aktivasi_gemini' => 0,
-            'msisdns' => [
-                // "123" -> normalized becomes "0123" which is 4 chars (fails min:9)
-                ['number' => '+62 123', 'type' => 'starter_pack'], 
-            ]
+            'msisdn' => '+62 123', // "123" -> normalized becomes "0123" which is 4 chars (fails min:9)
+            'type' => 'starter_pack',
+            'location_name' => 'Outlet Cabang Test',
+            'foto_penjualan' => UploadedFile::fake()->image('penjualan.jpg')
         ];
 
         $response = $this->actingAs($this->user)
@@ -108,20 +101,16 @@ class TransactionValidationTest extends TestCase
 
         // Validation error
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['msisdns.0.number']);
+        $response->assertJsonValidationErrors(['msisdn']);
     }
 
     public function test_it_rejects_msisdn_if_too_long_after_normalization()
     {
         $payload = [
-            'jml_edukasi' => 1,
-            'jml_sp' => 1,
-            'jml_pulsa' => 0,
-            'jml_aktivasi_gemini' => 0,
-            'msisdns' => [
-                // Very long string
-                ['number' => '+62 858-1234-5678-9999-9999', 'type' => 'starter_pack'], 
-            ]
+            'msisdn' => '+62 858-1234-5678-9999-9999', // Very long string
+            'type' => 'starter_pack',
+            'location_name' => 'Outlet Cabang Test',
+            'foto_penjualan' => UploadedFile::fake()->image('penjualan.jpg')
         ];
 
         $response = $this->actingAs($this->user)
@@ -129,6 +118,23 @@ class TransactionValidationTest extends TestCase
 
         // Validation error
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['msisdns.0.number']);
+        $response->assertJsonValidationErrors(['msisdn']);
+    }
+
+    public function test_it_rejects_msisdn_if_wrong_prefix()
+    {
+        $payload = [
+            'msisdn' => '08112345678', // 0811 is Telkomsel prefix, should fail regex
+            'type' => 'starter_pack',
+            'location_name' => 'Outlet Cabang Test',
+            'foto_penjualan' => UploadedFile::fake()->image('penjualan.jpg')
+        ];
+
+        $response = $this->actingAs($this->user)
+            ->postJson(route('promotor.transactions.store'), $payload);
+
+        // Validation error
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['msisdn']);
     }
 }

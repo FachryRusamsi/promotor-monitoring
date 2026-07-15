@@ -30,18 +30,24 @@ defineProps<{
         <div class="px-5 -mt-10 mb-8 relative z-20 space-y-6">
             
             <!-- Quick Actions -->
-            <div class="grid grid-cols-2 gap-4">
-                <Link :href="route('promotor.attendance.index')" class="bg-white shadow-md p-4 flex flex-col items-center justify-center gap-3 transition-transform active:scale-95 border border-gray-100">
-                    <div class="w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center">
-                        <img src="/image/icon/Icon%20IOH-Register.png" alt="Absensi" class="w-8 h-8 object-contain" />
+            <div class="grid grid-cols-3 gap-3 md:gap-4">
+                <Link :href="route('promotor.attendance.index')" class="bg-white shadow-md p-3 md:p-4 flex flex-col items-center justify-center gap-2 md:gap-3 transition-transform active:scale-95 border border-gray-100 rounded-xl text-center">
+                    <div class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-indigo-50 flex items-center justify-center">
+                        <img src="/image/icon/Icon%20IOH-Register.png" alt="Absensi" class="w-7 h-7 md:w-8 md:h-8 object-contain" />
                     </div>
-                    <span class="font-semibold text-gray-800 text-sm">Absensi</span>
+                    <span class="font-semibold text-gray-800 text-xs md:text-sm">Absensi</span>
                 </Link>
-                <Link :href="route('promotor.transactions.index')" class="bg-white shadow-md p-4 flex flex-col items-center justify-center gap-3 transition-transform active:scale-95 border border-gray-100">
-                    <div class="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center">
-                        <img src="/image/icon/Icon IOH-Report.png" alt="Lapor Penjualan" class="w-8 h-8 object-contain" />
+                <Link :href="route('promotor.edukasi.index')" class="bg-white shadow-md p-3 md:p-4 flex flex-col items-center justify-center gap-2 md:gap-3 transition-transform active:scale-95 border border-gray-100 rounded-xl text-center">
+                    <div class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-blue-50 flex items-center justify-center">
+                        <img src="/image/icon/Icon%20IOH-Stock%20Market.png" alt="Lapor Edukasi" class="w-7 h-7 md:w-8 md:h-8 object-contain" />
                     </div>
-                    <span class="font-semibold text-gray-800 text-sm">Lapor Penjualan</span>
+                    <span class="font-semibold text-gray-800 text-xs md:text-sm">Lapor Edukasi</span>
+                </Link>
+                <Link :href="route('promotor.transactions.index')" class="bg-white shadow-md p-3 md:p-4 flex flex-col items-center justify-center gap-2 md:gap-3 transition-transform active:scale-95 border border-gray-100 rounded-xl text-center">
+                    <div class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-emerald-50 flex items-center justify-center">
+                        <img src="/image/icon/Icon IOH-Report.png" alt="Lapor Penjualan" class="w-7 h-7 md:w-8 md:h-8 object-contain" />
+                    </div>
+                    <span class="font-semibold text-gray-800 text-xs md:text-sm">Lapor Penjualan</span>
                 </Link>
             </div>
 
