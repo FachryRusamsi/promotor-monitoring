@@ -304,8 +304,72 @@ const formatDate = (datetime) => {
                     </div>
                 </div>
 
+                <!-- TOP 5 RANKINGS -->
+                <div v-if="!forcePromotorView" class="flex flex-col gap-6">
+                    <!-- Top Region and Top Branch Side-by-Side -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Region Ranking -->
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                            <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Ranking Region (Nasional)</h3>
+                            <div class="space-y-4">
+                                <div v-for="(region, index) in regionRankings" :key="region.id" class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <span class="w-8 h-8 rounded-full flex items-center justify-center font-bold" 
+                                            :class="index === 0 ? 'bg-yellow-100 text-yellow-700' : (index === 1 ? 'bg-gray-100 text-gray-700' : 'bg-orange-50 text-orange-700')">
+                                            {{ index + 1 }}
+                                        </span>
+                                        <span class="font-medium text-gray-700">{{ region.name }}</span>
+                                    </div>
+                                    <span class="font-bold text-indigo-600">{{ region.total_sales }} Transaksi</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Branch Ranking -->
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                            <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Top 5 Branch</h3>
+                            <div class="space-y-4">
+                                <div v-for="(branch, index) in topBranches" :key="branch.id" class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <span class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                                            {{ index + 1 }}
+                                        </span>
+                                        <div>
+                                            <p class="font-medium text-gray-700">{{ branch.name }}</p>
+                                            <p class="text-xs text-gray-400">{{ branch.region_name }}</p>
+                                        </div>
+                                    </div>
+                                    <span class="font-bold text-emerald-600">{{ branch.total_sales }} Transaksi</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Promotor Ranking Full Width -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                        <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Top 5 Promotor</h3>
+                        <div class="space-y-4">
+                            <div v-for="(promotor, index) in topPromotors" :key="promotor.id" @click="openPromotorModal(promotor)" class="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors group border border-transparent hover:border-gray-100">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                                        {{ index + 1 }}
+                                    </span>
+                                    <div>
+                                        <p class="font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">{{ promotor.name }}</p>
+                                        <p class="text-xs text-gray-400">{{ promotor.area_name }}</p>
+                                    </div>
+                                </div>
+                                <span class="font-bold text-blue-600">{{ promotor.total_sales }} Transaksi</span>
+                            </div>
+                            <div v-if="topPromotors.length === 0" class="text-center text-gray-500 py-8 text-sm">
+                                Tidak ada data promotor.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ALL PROMOTORS TABLE -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div v-if="forcePromotorView" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                         <h3 class="font-bold text-gray-800">Daftar Seluruh Promotor</h3>
                     </div>
