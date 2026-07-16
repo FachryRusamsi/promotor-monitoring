@@ -36,14 +36,14 @@ class TrackingController extends Controller
             ->get();
 
         $totalEdukasi = $transactions->sum('jml_edukasi');
-        $totalPenjualan = $transactions->sum('jml_sp') + $transactions->sum('jml_pulsa');
+        $totalPenjualan = $transactions->sum('jml_sp') + $transactions->sum('jml_rebuy');
         $totalAktivasi = $transactions->sum('jml_aktivasi_gemini');
 
         // Cumulative KPI totals (all time)
         $allTransactions = $user->transactions()->get();
         $kpiAchievement = [
             'edukasi'    => $allTransactions->sum('jml_edukasi'),
-            'rebuy'      => $allTransactions->sum('jml_pulsa'),
+            'rebuy'      => $allTransactions->sum('jml_rebuy'),
             'sp'         => $allTransactions->sum('jml_sp'),
             'gemini'     => $allTransactions->sum('jml_aktivasi_gemini'),
         ];

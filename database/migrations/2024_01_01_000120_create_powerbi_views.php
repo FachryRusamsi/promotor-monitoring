@@ -17,7 +17,7 @@ return new class extends Migration
                 t.id AS transaction_id,
                 t.jml_edukasi,
                 t.jml_sp,
-                t.jml_pulsa,
+                t.jml_rebuy,
                 t.jml_aktivasi_gemini,
                 t.location_name,
                 t.latitude,

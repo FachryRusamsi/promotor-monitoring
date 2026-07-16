@@ -74,7 +74,7 @@ class AchievementReportExport implements FromCollection, WithMapping, WithStyles
                     ->selectRaw('
                         COUNT(DISTINCT users.id) as promotor_count,
                         SUM(transactions.jml_edukasi) as total_edukasi,
-                        SUM(transactions.jml_sp + transactions.jml_pulsa) as total_rebuy,
+                        SUM(transactions.jml_sp + transactions.jml_rebuy) as total_rebuy,
                         SUM(transactions.jml_aktivasi_gemini) as total_akuisisi
                     ')
                     ->first();

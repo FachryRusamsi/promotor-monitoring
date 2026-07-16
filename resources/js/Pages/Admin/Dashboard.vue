@@ -56,7 +56,7 @@ const pieChartData = computed(() => ({
     labels: currentChartDataList.value.map(r => r.name),
     datasets: [{
         backgroundColor: ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#14B8A6', '#6366F1', '#84CC16'],
-        data: currentChartDataList.value.map(r => r.total_sales !== undefined ? r.total_sales : (r.total_edukasi + r.total_sp + r.total_pulsa + r.total_gemini))
+        data: currentChartDataList.value.map(r => r.total_sales !== undefined ? r.total_sales : (r.total_edukasi + r.total_sp + r.total_rebuy + r.total_gemini))
     }]
 }));
 
@@ -98,11 +98,11 @@ const lineChartData = computed(() => ({
             data: currentChartDataList.value.map(p => p.total_sp) 
         },
         { 
-            label: 'Pulsa', 
+            label: 'Rebuy', 
             borderColor: '#10B981', 
             backgroundColor: '#10B981',
             tension: 0.3,
-            data: currentChartDataList.value.map(p => p.total_pulsa) 
+            data: currentChartDataList.value.map(p => p.total_rebuy) 
         },
         { 
             label: 'Aktivasi Gemini', 
@@ -195,10 +195,19 @@ const formatDate = (datetime) => {
     return new Date(datetime).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
+const getPercentage = (value, total) => {
+    if (!total || total === 0) return 0;
+    return Math.round((value / total) * 100);
+};
+
+const getKpi = (sales) => {
+    return Math.round((sales / 800) * 100);
+};
+
 // KPI Targets & Helpers
 const KPI_TARGETS = { edukasi: 600, rebuy: 200, sp: 100, gemini: 100 };
 const kpiPct = (val, target) => Math.min(Math.round((val / target) * 100), 100);
-const avgKpi = (p) => Math.round((kpiPct(p.total_edukasi, KPI_TARGETS.edukasi) + kpiPct(p.total_pulsa, KPI_TARGETS.rebuy) + kpiPct(p.total_sp, KPI_TARGETS.sp) + kpiPct(p.total_gemini, KPI_TARGETS.gemini)) / 4);
+const avgKpi = (p) => Math.round((kpiPct(p.total_edukasi, KPI_TARGETS.edukasi) + kpiPct(p.total_rebuy, KPI_TARGETS.rebuy) + kpiPct(p.total_sp, KPI_TARGETS.sp) + kpiPct(p.total_gemini, KPI_TARGETS.gemini)) / 4);
 const kpiColor = (p) => p >= 100 ? 'bg-emerald-500' : p >= 60 ? 'bg-indigo-500' : p >= 30 ? 'bg-amber-400' : 'bg-red-400';
 const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indigo-600' : p >= 30 ? 'text-amber-500' : 'text-red-500';
 </script>
@@ -276,7 +285,7 @@ const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indi
                     </div>
                     <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-5 shadow-lg text-white">
                         <h3 class="text-blue-100 font-medium text-sm">Total Pulsa</h3>
-                        <p class="text-3xl font-bold mt-2">{{ kpi.total_pulsa }}</p>
+                        <p class="text-3xl font-bold mt-2">{{ kpi.total_rebuy }}</p>
                     </div>
                     <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-5 shadow-lg text-white">
                         <h3 class="text-purple-100 font-medium text-sm">Aktivasi Gemini</h3>
@@ -385,9 +394,9 @@ const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indi
                                         <div class="flex flex-col items-center gap-1.5">
                                             <span class="text-xs text-gray-500 uppercase font-bold tracking-wider">Rby</span>
                                             <div class="w-14 bg-gray-100 rounded-full h-2 flex overflow-hidden">
-                                                <div :class="['h-full transition-all', kpiColor(kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy))]" :style="{ width: kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy) + '%' }"></div>
+                                                <div :class="['h-full transition-all', kpiColor(kpiPct(promotor.total_rebuy, KPI_TARGETS.rebuy))]" :style="{ width: kpiPct(promotor.total_rebuy, KPI_TARGETS.rebuy) + '%' }"></div>
                                             </div>
-                                            <span :class="['text-xs font-bold', kpiTextColor(kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy))]">{{ kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy) }}%</span>
+                                            <span :class="['text-xs font-bold', kpiTextColor(kpiPct(promotor.total_rebuy, KPI_TARGETS.rebuy))]">{{ kpiPct(promotor.total_rebuy, KPI_TARGETS.rebuy) }}%</span>
                                         </div>
                                         <!-- SP -->
                                         <div class="flex flex-col items-center gap-1.5">
@@ -415,46 +424,69 @@ const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indi
                     </div>
                 </div>
 
-                <!-- ALL PROMOTORS TABLE -->
-                <div v-if="forcePromotorView" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                        <h3 class="font-bold text-gray-800">Daftar Seluruh Promotor</h3>
+                <!-- ALL PROMOTORS CARDS -->
+                <div v-if="forcePromotorView" class="pt-4">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-gray-800 text-lg">Daftar Seluruh Promotor</h3>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Nama Promotor</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Area / Region</th>
-                                    <th scope="col" class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Edukasi</th>
-                                    <th scope="col" class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">SP</th>
-                                    <th scope="col" class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Pulsa</th>
-                                    <th scope="col" class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Gemini</th>
-                                    <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-100">
-                                <tr v-for="promotor in allPromotors" :key="promotor.id" @click="openPromotorModal(promotor)" class="hover:bg-indigo-50/50 transition-colors cursor-pointer group">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">{{ promotor.name }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-600">{{ promotor.area_name }}</div>
-                                        <div class="text-xs text-gray-400">{{ promotor.region_name }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ promotor.total_edukasi }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ promotor.total_sp }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ promotor.total_pulsa }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ promotor.total_gemini }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-indigo-600">{{ promotor.total_sales }}</td>
-                                </tr>
-                                <tr v-if="allPromotors.length === 0">
-                                    <td colspan="7" class="px-6 py-8 text-center text-sm text-gray-500">
-                                        Tidak ada data promotor.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="space-y-4">
+                        <div v-for="promotor in allPromotors" :key="promotor.id" @click="openPromotorModal(promotor)" class="bg-white rounded-xl p-4 shadow-sm hover:bg-gray-50 transition-colors cursor-pointer border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            
+                            <!-- Left Info (Name & Area) -->
+                            <div class="flex-1">
+                                <h4 class="font-bold text-gray-800 text-sm">{{ promotor.name }}</h4>
+                                <p class="text-xs text-gray-400 mt-0.5">{{ promotor.area_name }} • {{ promotor.region_name }}</p>
+                            </div>
+                            
+                            <!-- Right Info (Breakdown & KPI) -->
+                            <div class="flex-1 min-w-[300px]">
+                                <!-- KPI & Total -->
+                                <div class="flex justify-end items-center mb-3">
+                                    <span class="text-rose-600 font-bold text-sm mr-4">KPI: {{ getKpi(promotor.total_sales) }}%</span>
+                                    <span class="text-gray-300 mr-4">|</span>
+                                    <span class="text-blue-600 font-bold text-sm">{{ promotor.total_sales }} Transaksi</span>
+                                </div>
+
+                            <!-- Breakdown Grid -->
+                            <div class="grid grid-cols-4 gap-2">
+                                <!-- EDU -->
+                                <div class="flex flex-col items-center">
+                                    <span class="text-[10px] font-bold text-gray-500 mb-2">EDU</span>
+                                    <div class="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
+                                        <div class="h-full bg-rose-500 rounded-full" :style="{ width: getPercentage(promotor.total_edukasi, promotor.total_sales) + '%' }"></div>
+                                    </div>
+                                    <span class="text-xs font-bold text-rose-500">{{ getPercentage(promotor.total_edukasi, promotor.total_sales) }}%</span>
+                                </div>
+                                <!-- RBY (Pulsa) -->
+                                <div class="flex flex-col items-center">
+                                    <span class="text-[10px] font-bold text-gray-500 mb-2">RBY</span>
+                                    <div class="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
+                                        <div class="h-full bg-rose-500 rounded-full" :style="{ width: getPercentage(promotor.total_rebuy, promotor.total_sales) + '%' }"></div>
+                                    </div>
+                                    <span class="text-xs font-bold text-rose-500">{{ getPercentage(promotor.total_rebuy, promotor.total_sales) }}%</span>
+                                </div>
+                                <!-- SP -->
+                                <div class="flex flex-col items-center">
+                                    <span class="text-[10px] font-bold text-gray-500 mb-2">SP</span>
+                                    <div class="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
+                                        <div class="h-full bg-rose-500 rounded-full" :style="{ width: getPercentage(promotor.total_sp, promotor.total_sales) + '%' }"></div>
+                                    </div>
+                                    <span class="text-xs font-bold text-rose-500">{{ getPercentage(promotor.total_sp, promotor.total_sales) }}%</span>
+                                </div>
+                                <!-- GEM -->
+                                <div class="flex flex-col items-center">
+                                    <span class="text-[10px] font-bold text-gray-500 mb-2">GEM</span>
+                                    <div class="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-2">
+                                        <div class="h-full bg-rose-500 rounded-full" :style="{ width: getPercentage(promotor.total_gemini, promotor.total_sales) + '%' }"></div>
+                                    </div>
+                                    <span class="text-xs font-bold text-rose-500">{{ getPercentage(promotor.total_gemini, promotor.total_sales) }}%</span>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                        <div v-if="allPromotors.length === 0" class="col-span-full text-center py-12 text-gray-500 bg-white rounded-2xl border border-gray-100">
+                            Tidak ada data promotor.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -527,9 +559,9 @@ const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indi
                                 </div>
                                 <div class="text-center pt-3 md:pt-0 border-r-0 md:border-r border-gray-100">
                                     <p class="text-xs text-gray-500">Rebuy</p>
-                                    <p class="text-xl font-bold text-blue-600">{{ promotorTransactions.reduce((acc, t) => acc + t.jml_pulsa, 0) }}</p>
-                                    <p :class="['text-sm font-bold mt-0.5', kpiTextColor(kpiPct(promotorTransactions.reduce((acc, t) => acc + t.jml_pulsa, 0), KPI_TARGETS.rebuy))]">
-                                        {{ kpiPct(promotorTransactions.reduce((acc, t) => acc + t.jml_pulsa, 0), KPI_TARGETS.rebuy) }}% KPI
+                                    <p class="text-xl font-bold text-blue-600">{{ promotorTransactions.reduce((acc, t) => acc + t.jml_rebuy, 0) }}</p>
+                                    <p :class="['text-sm font-bold mt-0.5', kpiTextColor(kpiPct(promotorTransactions.reduce((acc, t) => acc + t.jml_rebuy, 0), KPI_TARGETS.rebuy))]">
+                                        {{ kpiPct(promotorTransactions.reduce((acc, t) => acc + t.jml_rebuy, 0), KPI_TARGETS.rebuy) }}% KPI
                                     </p>
                                 </div>
                                 <div class="text-center pt-3 md:pt-0 border-l border-gray-100 md:border-l-0">

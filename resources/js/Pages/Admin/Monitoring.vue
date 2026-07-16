@@ -41,7 +41,7 @@ const props = defineProps({
 // KPI Targets & Helpers
 const KPI_TARGETS = { edukasi: 600, rebuy: 200, sp: 100, gemini: 100 };
 const kpiPct = (val, target) => Math.min(Math.round((val / target) * 100), 100);
-const avgKpi = (p) => Math.round((kpiPct(p.total_edukasi, KPI_TARGETS.edukasi) + kpiPct(p.total_pulsa, KPI_TARGETS.rebuy) + kpiPct(p.total_sp, KPI_TARGETS.sp) + kpiPct(p.total_gemini, KPI_TARGETS.gemini)) / 4) || 0;
+const avgKpi = (p) => Math.round((kpiPct(p.total_edukasi, KPI_TARGETS.edukasi) + kpiPct(p.total_rebuy, KPI_TARGETS.rebuy) + kpiPct(p.total_sp, KPI_TARGETS.sp) + kpiPct(p.total_gemini, KPI_TARGETS.gemini)) / 4) || 0;
 const kpiColor = (p) => p >= 100 ? 'bg-emerald-500' : p >= 60 ? 'bg-indigo-500' : p >= 30 ? 'bg-amber-400' : 'bg-red-400';
 const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indigo-600' : p >= 30 ? 'text-amber-500' : 'text-red-500';
 
@@ -305,9 +305,9 @@ onUnmounted(() => {
                           <div class="flex flex-col items-center gap-1 w-8">
                               <span class="text-[9px] text-gray-500 uppercase font-bold tracking-wider">Rby</span>
                               <div class="w-full bg-gray-100 rounded-full h-1.5 flex overflow-hidden">
-                                  <div :class="['h-full transition-all', kpiColor(kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy))]" :style="{ width: kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy) + '%' }"></div>
+                                  <div :class="['h-full transition-all', kpiColor(kpiPct(promotor.total_rebuy, KPI_TARGETS.rebuy))]" :style="{ width: kpiPct(promotor.total_rebuy, KPI_TARGETS.rebuy) + '%' }"></div>
                               </div>
-                              <span :class="['text-[9px] font-bold', kpiTextColor(kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy))]">{{ kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy) }}%</span>
+                              <span :class="['text-[9px] font-bold', kpiTextColor(kpiPct(promotor.total_rebuy, KPI_TARGETS.rebuy))]">{{ kpiPct(promotor.total_rebuy, KPI_TARGETS.rebuy) }}%</span>
                           </div>
                           <div class="flex flex-col items-center gap-1 w-8">
                               <span class="text-[9px] text-gray-500 uppercase font-bold tracking-wider">SP</span>
@@ -438,8 +438,8 @@ onUnmounted(() => {
                   <div class="text-lg font-bold text-indigo-800">{{ selectedPromotor?.total_sp }}</div>
                 </div>
                 <div class="bg-green-50 border border-green-100 rounded-lg p-3 text-center">
-                  <div class="text-xs text-green-500 mb-1">Pulsa</div>
-                  <div class="text-lg font-bold text-green-800">{{ selectedPromotor?.total_pulsa }}</div>
+                  <div class="text-xs text-green-500 mb-1">Rebuy</div>
+                  <div class="text-lg font-bold text-green-800">{{ selectedPromotor?.total_rebuy }}</div>
                 </div>
                 <div class="bg-rose-50 border border-rose-100 rounded-lg p-3 text-center">
                   <div class="text-xs text-rose-500 mb-1">Gemini</div>
@@ -475,7 +475,7 @@ onUnmounted(() => {
                     </div>
                     <div class="bg-green-50 rounded p-1">
                       <div class="text-[10px] text-green-500">Pls</div>
-                      <div class="text-xs font-bold">{{ log.total_pulsa }}</div>
+                      <div class="text-xs font-bold">{{ log.total_rebuy }}</div>
                     </div>
                     <div class="bg-rose-50 rounded p-1">
                       <div class="text-[10px] text-rose-500">Gem</div>

@@ -45,7 +45,7 @@ class DashboardController extends Controller
         $kpi = [
             'total_edukasi' => (int) $kpiQuery->sum('jml_edukasi'),
             'total_sp' => (int) $kpiQuery->sum('jml_sp'),
-            'total_pulsa' => (int) $kpiQuery->sum('jml_pulsa'),
+            'total_rebuy' => (int) $kpiQuery->sum('jml_rebuy'),
             'total_gemini' => (int) $kpiQuery->sum('jml_aktivasi_gemini'),
         ];
 
@@ -61,10 +61,10 @@ class DashboardController extends Controller
         };
 
         // Ranking Region (Semua region)
-        $regionRankings = Region::withSum(['transactions as total_sales' => $transactionFilter], DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'))
+        $regionRankings = Region::withSum(['transactions as total_sales' => $transactionFilter], DB::raw('jml_edukasi + jml_sp + jml_rebuy + jml_aktivasi_gemini'))
             ->withSum(['transactions as total_edukasi' => $transactionFilter], 'jml_edukasi')
             ->withSum(['transactions as total_sp' => $transactionFilter], 'jml_sp')
-            ->withSum(['transactions as total_pulsa' => $transactionFilter], 'jml_pulsa')
+            ->withSum(['transactions as total_rebuy' => $transactionFilter], 'jml_rebuy')
             ->withSum(['transactions as total_gemini' => $transactionFilter], 'jml_aktivasi_gemini')
             ->orderByRaw('total_sales DESC NULLS LAST')
             ->get()
@@ -75,13 +75,13 @@ class DashboardController extends Controller
                     'total_sales' => (int) ($region->total_sales ?? 0),
                     'total_edukasi' => (int) ($region->total_edukasi ?? 0),
                     'total_sp' => (int) ($region->total_sp ?? 0),
-                    'total_pulsa' => (int) ($region->total_pulsa ?? 0),
+                    'total_rebuy' => (int) ($region->total_rebuy ?? 0),
                     'total_gemini' => (int) ($region->total_gemini ?? 0),
                 ];
             });
 
         // Ranking Top 5 Branch
-        $branchQuery = Area::withSum(['transactions as total_sales' => $transactionFilter], DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'));
+        $branchQuery = Area::withSum(['transactions as total_sales' => $transactionFilter], DB::raw('jml_edukasi + jml_sp + jml_rebuy + jml_aktivasi_gemini'));
         
         if ($regionId) {
             $branchQuery->where('region_id', $regionId);
@@ -101,10 +101,10 @@ class DashboardController extends Controller
 
         // Top Rank Promotors
         $promotorQuery = User::whereHas('role', fn($q) => $q->where('name', 'promotor'))
-            ->withSum(['transactions as total_sales' => $transactionFilter], DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'))
+            ->withSum(['transactions as total_sales' => $transactionFilter], DB::raw('jml_edukasi + jml_sp + jml_rebuy + jml_aktivasi_gemini'))
             ->withSum(['transactions as total_edukasi' => $transactionFilter], 'jml_edukasi')
             ->withSum(['transactions as total_sp' => $transactionFilter], 'jml_sp')
-            ->withSum(['transactions as total_pulsa' => $transactionFilter], 'jml_pulsa')
+            ->withSum(['transactions as total_rebuy' => $transactionFilter], 'jml_rebuy')
             ->withSum(['transactions as total_gemini' => $transactionFilter], 'jml_aktivasi_gemini');
             
         if ($regionId) {
@@ -126,7 +126,7 @@ class DashboardController extends Controller
                     'total_sales' => $user->total_sales ?? 0,
                     'total_edukasi' => (int) ($user->total_edukasi ?? 0),
                     'total_sp' => (int) ($user->total_sp ?? 0),
-                    'total_pulsa' => (int) ($user->total_pulsa ?? 0),
+                    'total_rebuy' => (int) ($user->total_rebuy ?? 0),
                     'total_gemini' => (int) ($user->total_gemini ?? 0)
                 ];
             });
@@ -135,7 +135,7 @@ class DashboardController extends Controller
         $allPromotorsQuery = User::whereHas('role', fn($q) => $q->where('name', 'promotor'))
             ->withSum(['transactions as total_edukasi' => $transactionFilter], 'jml_edukasi')
             ->withSum(['transactions as total_sp' => $transactionFilter], 'jml_sp')
-            ->withSum(['transactions as total_pulsa' => $transactionFilter], 'jml_pulsa')
+            ->withSum(['transactions as total_rebuy' => $transactionFilter], 'jml_rebuy')
             ->withSum(['transactions as total_gemini' => $transactionFilter], 'jml_aktivasi_gemini');
 
         if ($regionId) {
@@ -151,19 +151,19 @@ class DashboardController extends Controller
                 'name' => $user->name,
                 'region_name' => $user->region->name ?? '-',
                 'area_name' => $user->area->name ?? '-',
-                'total_sales' => (int) (($user->total_edukasi ?? 0) + ($user->total_sp ?? 0) + ($user->total_pulsa ?? 0) + ($user->total_gemini ?? 0)),
+                'total_sales' => (int) (($user->total_edukasi ?? 0) + ($user->total_sp ?? 0) + ($user->total_rebuy ?? 0) + ($user->total_gemini ?? 0)),
                 'total_edukasi' => (int) ($user->total_edukasi ?? 0),
                 'total_sp' => (int) ($user->total_sp ?? 0),
-                'total_pulsa' => (int) ($user->total_pulsa ?? 0),
+                'total_rebuy' => (int) ($user->total_rebuy ?? 0),
                 'total_gemini' => (int) ($user->total_gemini ?? 0),
             ];
         });
 
         // All Branches KPI breakdown (for dynamic chart)
-        $allBranchesQuery = Area::withSum(['transactions as total_sales' => $transactionFilter], DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'))
+        $allBranchesQuery = Area::withSum(['transactions as total_sales' => $transactionFilter], DB::raw('jml_edukasi + jml_sp + jml_rebuy + jml_aktivasi_gemini'))
             ->withSum(['transactions as total_edukasi' => $transactionFilter], 'jml_edukasi')
             ->withSum(['transactions as total_sp' => $transactionFilter], 'jml_sp')
-            ->withSum(['transactions as total_pulsa' => $transactionFilter], 'jml_pulsa')
+            ->withSum(['transactions as total_rebuy' => $transactionFilter], 'jml_rebuy')
             ->withSum(['transactions as total_gemini' => $transactionFilter], 'jml_aktivasi_gemini');
 
         if ($regionId) {
@@ -177,7 +177,7 @@ class DashboardController extends Controller
                 'total_sales' => (int) ($branch->total_sales ?? 0),
                 'total_edukasi' => (int) ($branch->total_edukasi ?? 0),
                 'total_sp' => (int) ($branch->total_sp ?? 0),
-                'total_pulsa' => (int) ($branch->total_pulsa ?? 0),
+                'total_rebuy' => (int) ($branch->total_rebuy ?? 0),
                 'total_gemini' => (int) ($branch->total_gemini ?? 0),
             ];
         });
@@ -208,10 +208,10 @@ class DashboardController extends Controller
         $promotors = User::whereHas('role', fn ($q) => $q->where('name', 'promotor'))
             ->when($regionId, fn ($q) => $q->where('region_id', $regionId))
             ->when($areaId, fn ($q) => $q->where('area_id', $areaId))
-            ->withSum('transactions as total_sales', DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'))
+            ->withSum('transactions as total_sales', DB::raw('jml_edukasi + jml_sp + jml_rebuy + jml_aktivasi_gemini'))
             ->withSum('transactions as total_edukasi', 'jml_edukasi')
             ->withSum('transactions as total_sp', 'jml_sp')
-            ->withSum('transactions as total_pulsa', 'jml_pulsa')
+            ->withSum('transactions as total_rebuy', 'jml_rebuy')
             ->withSum('transactions as total_gemini', 'jml_aktivasi_gemini')
             ->with([
                 'attendances' => fn ($q) => $q->whereDate('work_date', $date),
@@ -225,7 +225,7 @@ class DashboardController extends Controller
                 
                 $total_edukasi = $promotor->transactions->sum('jml_edukasi');
                 $total_sp = $promotor->transactions->sum('jml_sp');
-                $total_pulsa = $promotor->transactions->sum('jml_pulsa');
+                $total_rebuy = $promotor->transactions->sum('jml_rebuy');
                 $total_gemini = $promotor->transactions->sum('jml_aktivasi_gemini');
 
                 return [
@@ -241,7 +241,7 @@ class DashboardController extends Controller
                     'has_reported' => $hasReported,
                     'total_edukasi' => (int) $total_edukasi,
                     'total_sp' => (int) $total_sp,
-                    'total_pulsa' => (int) $total_pulsa,
+                    'total_rebuy' => (int) $total_rebuy,
                     'total_gemini' => (int) $total_gemini
                 ];
             });
@@ -279,7 +279,7 @@ class DashboardController extends Controller
                 'created_at' => $trx->created_at->format('Y-m-d H:i:s'),
                 'jml_edukasi' => $trx->jml_edukasi,
                 'jml_sp' => $trx->jml_sp,
-                'jml_pulsa' => $trx->jml_pulsa,
+                'jml_rebuy' => $trx->jml_rebuy,
                 'jml_aktivasi_gemini' => $trx->jml_aktivasi_gemini,
                 'foto_edukasi' => $trx->foto_edukasi,
                 'foto_penjualan' => $trx->foto_penjualan,
@@ -326,7 +326,7 @@ class DashboardController extends Controller
                 'check_out_time' => $att && $att->check_out_at ? \Carbon\Carbon::parse($att->check_out_at)->format('H:i') : null,
                 'total_edukasi' => (int) $trxs->sum('jml_edukasi'),
                 'total_sp' => (int) $trxs->sum('jml_sp'),
-                'total_pulsa' => (int) $trxs->sum('jml_pulsa'),
+                'total_rebuy' => (int) $trxs->sum('jml_rebuy'),
                 'total_gemini' => (int) $trxs->sum('jml_aktivasi_gemini'),
             ];
         });
