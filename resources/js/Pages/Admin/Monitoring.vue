@@ -38,6 +38,13 @@ const props = defineProps({
   }
 });
 
+// KPI Targets & Helpers
+const KPI_TARGETS = { edukasi: 600, rebuy: 200, sp: 100, gemini: 100 };
+const kpiPct = (val, target) => Math.min(Math.round((val / target) * 100), 100);
+const avgKpi = (p) => Math.round((kpiPct(p.total_edukasi, KPI_TARGETS.edukasi) + kpiPct(p.total_pulsa, KPI_TARGETS.rebuy) + kpiPct(p.total_sp, KPI_TARGETS.sp) + kpiPct(p.total_gemini, KPI_TARGETS.gemini)) / 4) || 0;
+const kpiColor = (p) => p >= 100 ? 'bg-emerald-500' : p >= 60 ? 'bg-indigo-500' : p >= 30 ? 'bg-amber-400' : 'bg-red-400';
+const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indigo-600' : p >= 30 ? 'text-amber-500' : 'text-red-500';
+
 const selectedRegion = ref(props.currentFilters.region_id || '');
 const selectedArea = ref(props.currentFilters.area_id || '');
 const selectedDate = ref(props.currentFilters.date || new Date().toISOString().split('T')[0]);
@@ -242,6 +249,7 @@ onUnmounted(() => {
                 <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Nama Promotor</th>
                 <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Jam Masuk</th>
                 <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Jam Keluar</th>
+                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">KPI Progress</th>
                 <th scope="col" class="pl-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
               </tr>
             </thead>
@@ -282,6 +290,41 @@ onUnmounted(() => {
                     <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
                     Belum Keluar
                   </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex flex-col gap-1.5" @click.stop>
+                      <span :class="['text-sm font-bold', kpiTextColor(avgKpi(promotor))]">KPI: {{ avgKpi(promotor) }}%</span>
+                      <div class="flex items-center gap-3">
+                          <div class="flex flex-col items-center gap-1 w-8">
+                              <span class="text-[9px] text-gray-500 uppercase font-bold tracking-wider">Edu</span>
+                              <div class="w-full bg-gray-100 rounded-full h-1.5 flex overflow-hidden">
+                                  <div :class="['h-full transition-all', kpiColor(kpiPct(promotor.total_edukasi, KPI_TARGETS.edukasi))]" :style="{ width: kpiPct(promotor.total_edukasi, KPI_TARGETS.edukasi) + '%' }"></div>
+                              </div>
+                              <span :class="['text-[9px] font-bold', kpiTextColor(kpiPct(promotor.total_edukasi, KPI_TARGETS.edukasi))]">{{ kpiPct(promotor.total_edukasi, KPI_TARGETS.edukasi) }}%</span>
+                          </div>
+                          <div class="flex flex-col items-center gap-1 w-8">
+                              <span class="text-[9px] text-gray-500 uppercase font-bold tracking-wider">Rby</span>
+                              <div class="w-full bg-gray-100 rounded-full h-1.5 flex overflow-hidden">
+                                  <div :class="['h-full transition-all', kpiColor(kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy))]" :style="{ width: kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy) + '%' }"></div>
+                              </div>
+                              <span :class="['text-[9px] font-bold', kpiTextColor(kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy))]">{{ kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy) }}%</span>
+                          </div>
+                          <div class="flex flex-col items-center gap-1 w-8">
+                              <span class="text-[9px] text-gray-500 uppercase font-bold tracking-wider">SP</span>
+                              <div class="w-full bg-gray-100 rounded-full h-1.5 flex overflow-hidden">
+                                  <div :class="['h-full transition-all', kpiColor(kpiPct(promotor.total_sp, KPI_TARGETS.sp))]" :style="{ width: kpiPct(promotor.total_sp, KPI_TARGETS.sp) + '%' }"></div>
+                              </div>
+                              <span :class="['text-[9px] font-bold', kpiTextColor(kpiPct(promotor.total_sp, KPI_TARGETS.sp))]">{{ kpiPct(promotor.total_sp, KPI_TARGETS.sp) }}%</span>
+                          </div>
+                          <div class="flex flex-col items-center gap-1 w-8">
+                              <span class="text-[9px] text-gray-500 uppercase font-bold tracking-wider">Gem</span>
+                              <div class="w-full bg-gray-100 rounded-full h-1.5 flex overflow-hidden">
+                                  <div :class="['h-full transition-all', kpiColor(kpiPct(promotor.total_gemini, KPI_TARGETS.gemini))]" :style="{ width: kpiPct(promotor.total_gemini, KPI_TARGETS.gemini) + '%' }"></div>
+                              </div>
+                              <span :class="['text-[9px] font-bold', kpiTextColor(kpiPct(promotor.total_gemini, KPI_TARGETS.gemini))]">{{ kpiPct(promotor.total_gemini, KPI_TARGETS.gemini) }}%</span>
+                          </div>
+                      </div>
+                  </div>
                 </td>
                 <td class="pl-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button class="text-indigo-600 hover:text-indigo-900 inline-flex items-center gap-1">

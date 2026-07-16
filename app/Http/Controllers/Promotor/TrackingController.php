@@ -30,6 +30,7 @@ class TrackingController extends Controller
         $attendanceService = new AttendanceService();
         $attendanceStatus = $attendanceService->getTodayAttendanceStatus($user);
 
+        // Today's metrics
         $transactions = $user->transactions()
             ->whereDate('transaction_date', $today)
             ->get();
@@ -38,12 +39,22 @@ class TrackingController extends Controller
         $totalPenjualan = $transactions->sum('jml_sp') + $transactions->sum('jml_pulsa');
         $totalAktivasi = $transactions->sum('jml_aktivasi_gemini');
 
+        // Cumulative KPI totals (all time)
+        $allTransactions = $user->transactions()->get();
+        $kpiAchievement = [
+            'edukasi'    => $allTransactions->sum('jml_edukasi'),
+            'rebuy'      => $allTransactions->sum('jml_pulsa'),
+            'sp'         => $allTransactions->sum('jml_sp'),
+            'gemini'     => $allTransactions->sum('jml_aktivasi_gemini'),
+        ];
+
         return Inertia::render('Promotor/Dashboard', [
             'metrics' => [
-                'edukasi' => $totalEdukasi,
+                'edukasi'   => $totalEdukasi,
                 'penjualan' => $totalPenjualan,
-                'aktivasi' => $totalAktivasi,
+                'aktivasi'  => $totalAktivasi,
             ],
+            'kpiAchievement' => $kpiAchievement,
             'attendanceStatus' => $attendanceStatus,
         ]);
     }
