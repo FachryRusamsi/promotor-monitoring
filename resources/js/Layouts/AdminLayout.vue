@@ -157,6 +157,23 @@ const sidebarOpen = ref(false);
                         </svg>
                         Reports
                     </Link>
+
+                    <Link
+                        :href="route('admin.powerbi')"
+                        @click="sidebarOpen = false"
+                        :class="[
+                            'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
+                            route().current('admin.powerbi')
+                                ? 'bg-gray-500/10 text-gray-700 font-semibold shadow-sm'
+                                : 'text-gray-600 hover:bg-red-50 hover:text-[#ED1C24]'
+                        ]"
+                    >
+                        <svg class="w-5 h-5 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                            <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                        </svg>
+                        Power BI
+                    </Link>
                 </nav>
 
                 <div class="border-t border-gray-100 bg-white p-4">

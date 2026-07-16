@@ -42,11 +42,15 @@ class EdukasiController extends Controller
 
         $attendance = $user->attendances()
             ->whereDate('work_date', now()->toDateString())
+            ->where('status', 'working')
             ->latest()
             ->first();
 
-        // Temporary fallback
-        $outletId = $attendance ? $attendance->outlet_id : 1;
+        if (!$attendance) {
+            return back()->with('error', 'Anda harus Check-In terlebih dahulu dan belum Check-Out untuk melaporkan edukasi.');
+        }
+
+        $outletId = $attendance->outlet_id;
 
         $transaction = DB::transaction(function () use (
             $request,

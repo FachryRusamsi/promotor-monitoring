@@ -34,12 +34,13 @@ const props = defineProps({
   },
   currentFilters: {
     type: Object,
-    default: () => ({ region_id: '', area_id: '' })
+    default: () => ({ region_id: '', area_id: '', date: '' })
   }
 });
 
 const selectedRegion = ref(props.currentFilters.region_id || '');
 const selectedArea = ref(props.currentFilters.area_id || '');
+const selectedDate = ref(props.currentFilters.date || new Date().toISOString().split('T')[0]);
 
 const availableAreas = computed(() => {
   if (!selectedRegion.value) return [];
@@ -47,7 +48,7 @@ const availableAreas = computed(() => {
   return region ? region.areas : [];
 });
 
-watch([selectedRegion, selectedArea], ([newRegion, newArea], [oldRegion]) => {
+watch([selectedRegion, selectedArea, selectedDate], ([newRegion, newArea, newDate], [oldRegion]) => {
   if (newRegion !== oldRegion) {
     selectedArea.value = ''; // Reset area when region changes
   }
@@ -55,13 +56,16 @@ watch([selectedRegion, selectedArea], ([newRegion, newArea], [oldRegion]) => {
   import('@inertiajs/vue3').then(({ router }) => {
     router.get(route('admin.monitoring'), { 
       region_id: selectedRegion.value, 
-      area_id: selectedArea.value 
+      area_id: selectedArea.value,
+      date: selectedDate.value
     }, { preserveState: true });
   });
 });
 
 const selectedPromotor = ref(null);
 const isModalOpen = ref(false);
+const promotorHistory = ref([]);
+const isLoadingHistory = ref(false);
 
 const mapContainer = ref(null);
 let map = null;
@@ -70,10 +74,12 @@ let currentMarker = null;
 const openModal = async (promotor) => {
   selectedPromotor.value = promotor;
   isModalOpen.value = true;
+  promotorHistory.value = [];
   
   await nextTick();
   initMap();
   fetchLatestLocation(promotor.id);
+  fetchPromotorHistory(promotor.id);
 };
 
 const closeModal = () => {
@@ -119,6 +125,18 @@ const fetchLatestLocation = async (id) => {
     }
   } catch (error) {
     console.error("Failed to fetch location", error);
+  }
+};
+
+const fetchPromotorHistory = async (id) => {
+  isLoadingHistory.value = true;
+  try {
+    const response = await axios.get(`/admin/promotor/${id}/history-log`);
+    promotorHistory.value = response.data;
+  } catch (error) {
+    console.error("Failed to fetch history log", error);
+  } finally {
+    isLoadingHistory.value = false;
   }
 };
 
@@ -192,7 +210,8 @@ onUnmounted(() => {
           </div>
           
           <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
-            <!-- Filter Dropdowns -->
+            <input type="date" v-model="selectedDate" class="w-full md:w-auto rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+            
             <select v-model="selectedRegion" class="w-full md:w-auto rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
               <option value="">Semua Region</option>
               <option v-for="region in regions" :key="region.id" :value="region.id">{{ region.name }}</option>
@@ -251,7 +270,7 @@ onUnmounted(() => {
                   </span>
                   <span v-else class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-700 border border-red-100">
                     <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                    Belum Absen
+                    Belum / Tidak Absen
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
@@ -345,10 +364,12 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <!-- Aktivitas Report -->
+            <!-- Aktivitas Report & Rincian Penjualan -->
             <div>
-              <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Aktivitas Report</h4>
-              <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+              <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Aktivitas Penjualan ({{ selectedDate }})</h4>
+              
+              <!-- Report Status -->
+              <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100 mb-3">
                 <div :class="['p-2 rounded-full', selectedPromotor?.has_reported ? 'bg-blue-100 text-blue-600' : 'bg-yellow-100 text-yellow-600']">
                   <svg v-if="selectedPromotor?.has_reported" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
@@ -358,8 +379,66 @@ onUnmounted(() => {
                   </svg>
                 </div>
                 <div>
-                  <div class="font-bold text-gray-800">{{ selectedPromotor?.has_reported ? 'Sudah Report' : 'Belum Report' }}</div>
-                  <div class="text-xs text-gray-500">Status Transaksi Hari Ini</div>
+                  <div class="font-bold text-gray-800">{{ selectedPromotor?.has_reported ? 'Terdapat Transaksi' : 'Belum Ada Transaksi' }}</div>
+                  <div class="text-xs text-gray-500">Status Laporan</div>
+                </div>
+              </div>
+
+              <!-- Rincian -->
+              <div v-if="selectedPromotor?.has_reported" class="grid grid-cols-2 gap-3 mt-4">
+                <div class="bg-gray-50 border border-gray-100 rounded-lg p-3 text-center">
+                  <div class="text-xs text-gray-500 mb-1">Edukasi</div>
+                  <div class="text-lg font-bold text-gray-800">{{ selectedPromotor?.total_edukasi }}</div>
+                </div>
+                <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-3 text-center">
+                  <div class="text-xs text-indigo-500 mb-1">Starter Pack</div>
+                  <div class="text-lg font-bold text-indigo-800">{{ selectedPromotor?.total_sp }}</div>
+                </div>
+                <div class="bg-green-50 border border-green-100 rounded-lg p-3 text-center">
+                  <div class="text-xs text-green-500 mb-1">Pulsa</div>
+                  <div class="text-lg font-bold text-green-800">{{ selectedPromotor?.total_pulsa }}</div>
+                </div>
+                <div class="bg-rose-50 border border-rose-100 rounded-lg p-3 text-center">
+                  <div class="text-xs text-rose-500 mb-1">Gemini</div>
+                  <div class="text-lg font-bold text-rose-800">{{ selectedPromotor?.total_gemini }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- History Log 7 Hari -->
+            <div class="mt-4 border-t pt-4">
+              <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Riwayat 7 Hari Terakhir</h4>
+              <div v-if="isLoadingHistory" class="flex justify-center p-4">
+                <svg class="animate-spin h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+              <div v-else class="space-y-3">
+                <div v-for="log in promotorHistory" :key="log.date" class="bg-white border rounded-lg p-3 shadow-sm hover:shadow-md transition">
+                  <div class="flex justify-between items-center mb-2">
+                    <span class="font-bold text-gray-700 text-sm">{{ log.date }}</span>
+                    <span v-if="log.check_in_time" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-medium">{{ log.check_in_time }} - {{ log.check_out_time || '??' }}</span>
+                    <span v-else class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded font-medium">Tidak Masuk</span>
+                  </div>
+                  <div class="grid grid-cols-4 gap-1 text-center">
+                    <div class="bg-gray-50 rounded p-1">
+                      <div class="text-[10px] text-gray-500">Edu</div>
+                      <div class="text-xs font-bold">{{ log.total_edukasi }}</div>
+                    </div>
+                    <div class="bg-indigo-50 rounded p-1">
+                      <div class="text-[10px] text-indigo-500">SP</div>
+                      <div class="text-xs font-bold">{{ log.total_sp }}</div>
+                    </div>
+                    <div class="bg-green-50 rounded p-1">
+                      <div class="text-[10px] text-green-500">Pls</div>
+                      <div class="text-xs font-bold">{{ log.total_pulsa }}</div>
+                    </div>
+                    <div class="bg-rose-50 rounded p-1">
+                      <div class="text-[10px] text-rose-500">Gem</div>
+                      <div class="text-xs font-bold">{{ log.total_gemini }}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

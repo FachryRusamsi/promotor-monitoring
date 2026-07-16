@@ -66,7 +66,7 @@ class DashboardController extends Controller
             ->withSum(['transactions as total_sp' => $transactionFilter], 'jml_sp')
             ->withSum(['transactions as total_pulsa' => $transactionFilter], 'jml_pulsa')
             ->withSum(['transactions as total_gemini' => $transactionFilter], 'jml_aktivasi_gemini')
-            ->orderByDesc('total_sales')
+            ->orderByRaw('total_sales DESC NULLS LAST')
             ->get()
             ->map(function($region) {
                 return [
@@ -87,7 +87,7 @@ class DashboardController extends Controller
             $branchQuery->where('region_id', $regionId);
         }
 
-        $topBranches = $branchQuery->orderByDesc('total_sales')
+        $topBranches = $branchQuery->orderByRaw('total_sales DESC NULLS LAST')
             ->limit(5)
             ->get()
             ->map(function($branch) {
@@ -110,7 +110,7 @@ class DashboardController extends Controller
             $promotorQuery->where('area_id', $areaId);
         }
 
-        $topPromotors = $promotorQuery->orderByDesc('total_sales')
+        $topPromotors = $promotorQuery->orderByRaw('total_sales DESC NULLS LAST')
             ->limit(5)
             ->get()
             ->map(function($user) {
@@ -195,18 +195,24 @@ class DashboardController extends Controller
     {
         $regionId = $request->query('region_id');
         $areaId = $request->query('area_id');
+        $date = $request->query('date', today()->toDateString());
 
         $promotors = User::whereHas('role', fn ($q) => $q->where('name', 'promotor'))
             ->when($regionId, fn ($q) => $q->where('region_id', $regionId))
             ->when($areaId, fn ($q) => $q->where('area_id', $areaId))
             ->with([
-                'attendances' => fn ($q) => $q->whereDate('work_date', today()),
-                'transactions' => fn ($q) => $q->whereDate('transaction_date', today())
+                'attendances' => fn ($q) => $q->whereDate('work_date', $date),
+                'transactions' => fn ($q) => $q->whereDate('transaction_date', $date)
             ])
             ->get()
             ->map(function ($promotor) {
                 $attendance = $promotor->attendances->first();
                 $hasReported = $promotor->transactions->isNotEmpty();
+                
+                $total_edukasi = $promotor->transactions->sum('jml_edukasi');
+                $total_sp = $promotor->transactions->sum('jml_sp');
+                $total_pulsa = $promotor->transactions->sum('jml_pulsa');
+                $total_gemini = $promotor->transactions->sum('jml_aktivasi_gemini');
 
                 return [
                     'id' => $promotor->id,
@@ -219,6 +225,10 @@ class DashboardController extends Controller
                     'check_out_lng' => $attendance?->check_out_lng,
                     'status' => $attendance?->status,
                     'has_reported' => $hasReported,
+                    'total_edukasi' => (int) $total_edukasi,
+                    'total_sp' => (int) $total_sp,
+                    'total_pulsa' => (int) $total_pulsa,
+                    'total_gemini' => (int) $total_gemini,
                 ];
             });
 
@@ -228,6 +238,7 @@ class DashboardController extends Controller
             'currentFilters' => [
                 'region_id' => $regionId,
                 'area_id' => $areaId,
+                'date' => $date,
             ]
         ]);
     }
@@ -266,5 +277,53 @@ class DashboardController extends Controller
         });
 
         return response()->json($transactions);
+    }
+    public function promotorHistoryLog(Request $request, User $user)
+    {
+        // Get last 7 days of dates
+        $dates = collect();
+        for ($i = 0; $i < 7; $i++) {
+            $dates->push(now()->subDays($i)->toDateString());
+        }
+
+        // Fetch attendances for these dates
+        $attendances = $user->attendances()
+            ->whereIn(DB::raw('DATE(work_date)'), $dates->toArray())
+            ->get()
+            ->keyBy(function($item) {
+                return \Carbon\Carbon::parse($item->work_date)->toDateString();
+            });
+
+        // Fetch transactions for these dates
+        $transactions = $user->transactions()
+            ->whereIn(DB::raw('DATE(transaction_date)'), $dates->toArray())
+            ->get()
+            ->groupBy(function($item) {
+                return \Carbon\Carbon::parse($item->transaction_date)->toDateString();
+            });
+
+        $history = $dates->map(function($date) use ($attendances, $transactions) {
+            $att = $attendances->get($date);
+            $trxs = $transactions->get($date, collect());
+
+            return [
+                'date' => $date,
+                'check_in_time' => $att ? \Carbon\Carbon::parse($att->check_in_at)->format('H:i') : null,
+                'check_out_time' => $att && $att->check_out_at ? \Carbon\Carbon::parse($att->check_out_at)->format('H:i') : null,
+                'total_edukasi' => (int) $trxs->sum('jml_edukasi'),
+                'total_sp' => (int) $trxs->sum('jml_sp'),
+                'total_pulsa' => (int) $trxs->sum('jml_pulsa'),
+                'total_gemini' => (int) $trxs->sum('jml_aktivasi_gemini'),
+            ];
+        });
+
+        return response()->json($history);
+    }
+    
+    public function powerbi(Request $request): Response
+    {
+        return Inertia::render('Admin/PowerBiReport', [
+            'powerBiEmbedUrl' => env('POWERBI_EMBED_URL', '')
+        ]);
     }
 }

@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: promotor-app
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    environment:
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE:-promotor_db}
+      - DB_USERNAME=${DB_USERNAME:-promotor_user}
+      - DB_PASSWORD=${DB_PASSWORD:-rahasia}
+      - REDIS_HOST=redis
+      - APP_KEY=${APP_KEY}
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_URL=http://localhost:8000
+    depends_on:
+      - db
+      - redis
+    networks:
+      - promotor-network
+
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=${DB_DATABASE:-promotor_db}
+      - POSTGRES_USER=${DB_USERNAME:-promotor_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-rahasia}
+    volumes:
+      - promotor-pgsql:/var/lib/postgresql/data
+    networks:
+      - promotor-network
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - promotor-redis:/data
+    networks:
+      - promotor-network
+
+networks:
+  promotor-network:
+    driver: bridge
+
+volumes:
+  promotor-pgsql:
+    driver: local
+  promotor-redis:
+    driver: local
