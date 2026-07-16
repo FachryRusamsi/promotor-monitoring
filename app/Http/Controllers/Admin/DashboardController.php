@@ -101,7 +101,11 @@ class DashboardController extends Controller
 
         // Top Rank Promotors
         $promotorQuery = User::whereHas('role', fn($q) => $q->where('name', 'promotor'))
-            ->withSum(['transactions as total_sales' => $transactionFilter], DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'));
+            ->withSum(['transactions as total_sales' => $transactionFilter], DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'))
+            ->withSum(['transactions as total_edukasi' => $transactionFilter], 'jml_edukasi')
+            ->withSum(['transactions as total_sp' => $transactionFilter], 'jml_sp')
+            ->withSum(['transactions as total_pulsa' => $transactionFilter], 'jml_pulsa')
+            ->withSum(['transactions as total_gemini' => $transactionFilter], 'jml_aktivasi_gemini');
             
         if ($regionId) {
             $promotorQuery->where('region_id', $regionId);
@@ -119,7 +123,11 @@ class DashboardController extends Controller
                     'name' => $user->name,
                     'region_name' => $user->region->name ?? '',
                     'area_name' => $user->area->name ?? '',
-                    'total_sales' => $user->total_sales ?? 0
+                    'total_sales' => $user->total_sales ?? 0,
+                    'total_edukasi' => (int) ($user->total_edukasi ?? 0),
+                    'total_sp' => (int) ($user->total_sp ?? 0),
+                    'total_pulsa' => (int) ($user->total_pulsa ?? 0),
+                    'total_gemini' => (int) ($user->total_gemini ?? 0)
                 ];
             });
 
@@ -200,10 +208,16 @@ class DashboardController extends Controller
         $promotors = User::whereHas('role', fn ($q) => $q->where('name', 'promotor'))
             ->when($regionId, fn ($q) => $q->where('region_id', $regionId))
             ->when($areaId, fn ($q) => $q->where('area_id', $areaId))
+            ->withSum('transactions as total_sales', DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'))
+            ->withSum('transactions as total_edukasi', 'jml_edukasi')
+            ->withSum('transactions as total_sp', 'jml_sp')
+            ->withSum('transactions as total_pulsa', 'jml_pulsa')
+            ->withSum('transactions as total_gemini', 'jml_aktivasi_gemini')
             ->with([
                 'attendances' => fn ($q) => $q->whereDate('work_date', $date),
                 'transactions' => fn ($q) => $q->whereDate('transaction_date', $date)
             ])
+            ->orderByDesc('total_sales')
             ->get()
             ->map(function ($promotor) {
                 $attendance = $promotor->attendances->first();
@@ -228,7 +242,7 @@ class DashboardController extends Controller
                     'total_edukasi' => (int) $total_edukasi,
                     'total_sp' => (int) $total_sp,
                     'total_pulsa' => (int) $total_pulsa,
-                    'total_gemini' => (int) $total_gemini,
+                    'total_gemini' => (int) $total_gemini
                 ];
             });
 

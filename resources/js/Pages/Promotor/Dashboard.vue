@@ -8,8 +8,39 @@ defineProps<{
         penjualan: number;
         aktivasi: number;
     };
+    kpiAchievement: {
+        edukasi: number;
+        rebuy: number;
+        sp: number;
+        gemini: number;
+    };
     attendanceStatus: string;
 }>();
+
+const KPI_TARGETS = {
+    edukasi: 600,
+    rebuy:   200,
+    sp:      100,
+    gemini:  100,
+};
+
+function pct(val: number, target: number): number {
+    return Math.min(Math.round((val / target) * 100), 100);
+}
+
+function colorClass(p: number): string {
+    if (p >= 100) return 'bg-emerald-500';
+    if (p >= 60)  return 'bg-indigo-500';
+    if (p >= 30)  return 'bg-amber-400';
+    return 'bg-red-400';
+}
+
+function textColor(p: number): string {
+    if (p >= 100) return 'text-emerald-600';
+    if (p >= 60)  return 'text-indigo-600';
+    if (p >= 30)  return 'text-amber-500';
+    return 'text-red-500';
+}
 </script>
 
 <template>
@@ -29,7 +60,7 @@ defineProps<{
         <!-- Main Content inside overlapping card -->
         <div class="px-5 -mt-10 mb-8 relative z-20 space-y-6">
             
-            <!-- Metrics -->
+            <!-- Metrics + KPI Progress (merged card) -->
             <div class="bg-white shadow-sm border border-gray-100 p-5 rounded-xl">
                 <h2 class="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
                     <img src="/image/icon/Icon%20IOH-Stock%20Market.png" alt="Pencapaian Hari Ini" class="w-5 h-5 object-contain" />
@@ -48,6 +79,70 @@ defineProps<{
                     <div class="bg-gray-50 rounded-xl p-3 text-center border border-gray-100">
                         <h3 class="text-2xl font-extrabold text-blue-600">{{ metrics.aktivasi }}</h3>
                         <p class="text-[11px] font-medium text-gray-500 mt-1 uppercase tracking-wide">Gemini</p>
+                    </div>
+                </div>
+
+                <!-- Divider -->
+                <div class="border-t border-gray-100 my-5"></div>
+
+                <!-- Progress KPI -->
+                <h3 class="text-sm font-bold text-gray-800 mb-4">Progress KPI</h3>
+
+                <div class="space-y-4">
+                    <!-- Edukasi -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-medium text-gray-700">Edukasi</span>
+                            <span :class="['text-sm font-bold', textColor(pct(kpiAchievement.edukasi, KPI_TARGETS.edukasi))]">
+                                {{ kpiAchievement.edukasi }} / {{ KPI_TARGETS.edukasi }}
+                                <span class="text-xs font-normal text-gray-400 ml-1">({{ pct(kpiAchievement.edukasi, KPI_TARGETS.edukasi) }}%)</span>
+                            </span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2.5">
+                            <div :class="['h-2.5 rounded-full transition-all duration-700', colorClass(pct(kpiAchievement.edukasi, KPI_TARGETS.edukasi))]" :style="{ width: pct(kpiAchievement.edukasi, KPI_TARGETS.edukasi) + '%' }"></div>
+                        </div>
+                    </div>
+
+                    <!-- Rebuy -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-medium text-gray-700">Rebuy (Pulsa)</span>
+                            <span :class="['text-sm font-bold', textColor(pct(kpiAchievement.rebuy, KPI_TARGETS.rebuy))]">
+                                {{ kpiAchievement.rebuy }} / {{ KPI_TARGETS.rebuy }}
+                                <span class="text-xs font-normal text-gray-400 ml-1">({{ pct(kpiAchievement.rebuy, KPI_TARGETS.rebuy) }}%)</span>
+                            </span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2.5">
+                            <div :class="['h-2.5 rounded-full transition-all duration-700', colorClass(pct(kpiAchievement.rebuy, KPI_TARGETS.rebuy))]" :style="{ width: pct(kpiAchievement.rebuy, KPI_TARGETS.rebuy) + '%' }"></div>
+                        </div>
+                    </div>
+
+                    <!-- Starter Pack -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-medium text-gray-700">Acquisition (SP)</span>
+                            <span :class="['text-sm font-bold', textColor(pct(kpiAchievement.sp, KPI_TARGETS.sp))]">
+                                {{ kpiAchievement.sp }} / {{ KPI_TARGETS.sp }}
+                                <span class="text-xs font-normal text-gray-400 ml-1">({{ pct(kpiAchievement.sp, KPI_TARGETS.sp) }}%)</span>
+                            </span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2.5">
+                            <div :class="['h-2.5 rounded-full transition-all duration-700', colorClass(pct(kpiAchievement.sp, KPI_TARGETS.sp))]" :style="{ width: pct(kpiAchievement.sp, KPI_TARGETS.sp) + '%' }"></div>
+                        </div>
+                    </div>
+
+                    <!-- Gemini Claim -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-sm font-medium text-gray-700">Gemini Claim</span>
+                            <span :class="['text-sm font-bold', textColor(pct(kpiAchievement.gemini, KPI_TARGETS.gemini))]">
+                                {{ kpiAchievement.gemini }} / {{ KPI_TARGETS.gemini }}
+                                <span class="text-xs font-normal text-gray-400 ml-1">({{ pct(kpiAchievement.gemini, KPI_TARGETS.gemini) }}%)</span>
+                            </span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2.5">
+                            <div :class="['h-2.5 rounded-full transition-all duration-700', colorClass(pct(kpiAchievement.gemini, KPI_TARGETS.gemini))]" :style="{ width: pct(kpiAchievement.gemini, KPI_TARGETS.gemini) + '%' }"></div>
+                        </div>
                     </div>
                 </div>
             </div>
