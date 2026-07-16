@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed, onMounted } from 'vue';
 import PromotorLayout from '@/Layouts/PromotorLayout.vue';
 import InputError from '@/Components/InputError.vue';
@@ -59,9 +59,17 @@ const submit = () => {
 
 <template>
   <Head title="Lapor Edukasi" />
-  <PromotorLayout>
+  <PromotorLayout :hide-bottom-nav="true">
     <div class="px-4 py-6 mb-8 max-w-lg mx-auto">
-      <h1 class="text-2xl font-bold text-gray-800 mb-6">Lapor Edukasi</h1>
+      <!-- Page Header with Back Button -->
+      <div class="flex items-center gap-3 mb-6">
+        <Link :href="route('promotor.dashboard')" class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors active:scale-95 shrink-0">
+          <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </Link>
+        <h1 class="text-2xl font-bold text-gray-800">Lapor Edukasi</h1>
+      </div>
 
       <form @submit.prevent="submit" class="space-y-6">
         
