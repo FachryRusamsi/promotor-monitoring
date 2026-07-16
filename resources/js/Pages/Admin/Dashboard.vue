@@ -496,7 +496,7 @@ const formatDate = (datetime) => {
                                         <tbody class="bg-white divide-y divide-gray-100">
                                             <template v-for="(trx, index) in promotorTransactions" :key="trx.id">
                                                 <tr @click="expandedTrxId = expandedTrxId === trx.id ? null : trx.id" class="hover:bg-gray-50 transition-colors cursor-pointer">
-                                                    <td class="px-6 py-3 whitespace-nowrap text-sm font-bold text-gray-700">{{ promotorTransactions.length - index }}.</td>
+                                                    <td class="px-6 py-3 whitespace-nowrap text-sm font-bold text-gray-700">{{ index + 1 }}.</td>
                                                     <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-600">{{ formatDate(trx.created_at) }}</td>
                                                     <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-600">{{ formatTime(trx.created_at) }}</td>
                                                     <td class="px-6 py-3 whitespace-nowrap text-sm">
