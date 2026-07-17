@@ -145,19 +145,24 @@ class DashboardController extends Controller
             $allPromotorsQuery->where('area_id', $areaId);
         }
 
-        $allPromotors = $allPromotorsQuery->with(['region', 'area'])->get()->map(function($user) {
+        $allPromotors = $allPromotorsQuery->with(['region', 'area', 'attendances' => function($q) use ($endDate) {
+            $q->whereDate('work_date', $endDate);
+        }])->get()->map(function($user) {
+            $attendance = $user->attendances->first();
             return [
                 'id' => $user->id,
                 'name' => $user->name,
                 'region_name' => $user->region->name ?? '-',
                 'area_name' => $user->area->name ?? '-',
+                'check_in_time' => $attendance?->check_in_at?->format('H:i'),
+                'check_out_time' => $attendance?->check_out_at?->format('H:i'),
                 'total_sales' => (int) (($user->total_edukasi ?? 0) + ($user->total_sp ?? 0) + ($user->total_pulsa ?? 0) + ($user->total_gemini ?? 0)),
                 'total_edukasi' => (int) ($user->total_edukasi ?? 0),
                 'total_sp' => (int) ($user->total_sp ?? 0),
                 'total_pulsa' => (int) ($user->total_pulsa ?? 0),
                 'total_gemini' => (int) ($user->total_gemini ?? 0),
             ];
-        });
+        })->sortByDesc('total_sales')->values();
 
         // All Branches KPI breakdown (for dynamic chart)
         $allBranchesQuery = Area::withSum(['transactions as total_sales' => $transactionFilter], DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'))
@@ -199,63 +204,7 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function monitoring(Request $request): Response
-    {
-        $regionId = $request->query('region_id');
-        $areaId = $request->query('area_id');
-        $date = $request->query('date', today()->toDateString());
 
-        $promotors = User::whereHas('role', fn ($q) => $q->where('name', 'promotor'))
-            ->when($regionId, fn ($q) => $q->where('region_id', $regionId))
-            ->when($areaId, fn ($q) => $q->where('area_id', $areaId))
-            ->withSum('transactions as total_sales', DB::raw('jml_edukasi + jml_sp + jml_pulsa + jml_aktivasi_gemini'))
-            ->withSum('transactions as total_edukasi', 'jml_edukasi')
-            ->withSum('transactions as total_sp', 'jml_sp')
-            ->withSum('transactions as total_pulsa', 'jml_pulsa')
-            ->withSum('transactions as total_gemini', 'jml_aktivasi_gemini')
-            ->with([
-                'attendances' => fn ($q) => $q->whereDate('work_date', $date),
-                'transactions' => fn ($q) => $q->whereDate('transaction_date', $date)
-            ])
-            ->orderByDesc('total_sales')
-            ->get()
-            ->map(function ($promotor) {
-                $attendance = $promotor->attendances->first();
-                $hasReported = $promotor->transactions->isNotEmpty();
-                
-                $total_edukasi = $promotor->transactions->sum('jml_edukasi');
-                $total_sp = $promotor->transactions->sum('jml_sp');
-                $total_pulsa = $promotor->transactions->sum('jml_pulsa');
-                $total_gemini = $promotor->transactions->sum('jml_aktivasi_gemini');
-
-                return [
-                    'id' => $promotor->id,
-                    'name' => $promotor->name,
-                    'check_in_time' => $attendance?->check_in_at?->format('H:i'),
-                    'check_in_lat' => $attendance?->check_in_lat,
-                    'check_in_lng' => $attendance?->check_in_lng,
-                    'check_out_time' => $attendance?->check_out_at?->format('H:i'),
-                    'check_out_lat' => $attendance?->check_out_lat,
-                    'check_out_lng' => $attendance?->check_out_lng,
-                    'status' => $attendance?->status,
-                    'has_reported' => $hasReported,
-                    'total_edukasi' => (int) $total_edukasi,
-                    'total_sp' => (int) $total_sp,
-                    'total_pulsa' => (int) $total_pulsa,
-                    'total_gemini' => (int) $total_gemini
-                ];
-            });
-
-        return Inertia::render('Admin/Monitoring', [
-            'promotors' => $promotors,
-            'regions' => Region::with('areas')->get(),
-            'currentFilters' => [
-                'region_id' => $regionId,
-                'area_id' => $areaId,
-                'date' => $date,
-            ]
-        ]);
-    }
 
     public function promotorTransactions(Request $request, User $user)
     {
@@ -323,6 +272,8 @@ class DashboardController extends Controller
             return [
                 'date' => $date,
                 'check_in_time' => $att ? \Carbon\Carbon::parse($att->check_in_at)->format('H:i') : null,
+                'check_in_lat' => $att ? $att->check_in_lat : null,
+                'check_in_lng' => $att ? $att->check_in_lng : null,
                 'check_out_time' => $att && $att->check_out_at ? \Carbon\Carbon::parse($att->check_out_at)->format('H:i') : null,
                 'total_edukasi' => (int) $trxs->sum('jml_edukasi'),
                 'total_sp' => (int) $trxs->sum('jml_sp'),

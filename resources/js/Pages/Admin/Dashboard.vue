@@ -5,6 +5,25 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, PointElement, LineElement, CategoryScale, LinearScale } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { Pie, Line } from 'vue-chartjs';
+import axios from 'axios';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix Leaflet marker missing icons in Vite
+import iconUrl from 'leaflet/dist/images/marker-icon.png';
+import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
+import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
+
+const customIcon = L.icon({
+    iconUrl: iconUrl,
+    iconRetinaUrl: iconRetinaUrl,
+    shadowUrl: shadowUrl,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+L.Marker.prototype.options.icon = customIcon;
 
 ChartJS.register(ArcElement, Tooltip, Legend, PointElement, LineElement, CategoryScale, LinearScale, ChartDataLabels);
 
@@ -155,12 +174,20 @@ const modalEndDate = ref('');
 const isLoadingTransactions = ref(false);
 const expandedTrxId = ref(null);
 
+const activeTab = ref('kinerja');
+const mapContainer = ref(null);
+let map = null;
+const promotorHistory = ref([]);
+const isLoadingHistory = ref(false);
+const promotorToday = ref(null);
+
 const openPromotorModal = (promotor) => {
     selectedPromotorId.value = promotor.id;
     selectedPromotorName.value = promotor.name;
     modalStartDate.value = startDate.value;
     modalEndDate.value = endDate.value;
     isModalOpen.value = true;
+    activeTab.value = 'kinerja';
     fetchTransactions();
 };
 
@@ -168,6 +195,88 @@ const closePromotorModal = () => {
     isModalOpen.value = false;
     promotorTransactions.value = [];
     expandedTrxId.value = null;
+    activeTab.value = 'kinerja';
+};
+
+const changeTab = (tab) => {
+    activeTab.value = tab;
+    if (tab === 'location') {
+        fetchLocationData();
+    }
+};
+
+const fetchLocationData = async () => {
+    if (!selectedPromotorId.value) return;
+    isLoadingHistory.value = true;
+    try {
+        const response = await axios.get(`/admin/promotor/${selectedPromotorId.value}/history-log`);
+        promotorHistory.value = response.data;
+        if (promotorHistory.value.length > 0) {
+            promotorToday.value = promotorHistory.value[0];
+        } else {
+            promotorToday.value = null;
+        }
+    } catch (e) {
+        console.error(e);
+    } finally {
+        isLoadingHistory.value = false;
+        initMap();
+        fetchLatestLocation(selectedPromotorId.value);
+    }
+};
+
+const initMap = () => {
+    if (map) map.remove();
+    setTimeout(() => {
+        if (!mapContainer.value) return;
+        map = L.map(mapContainer.value).setView([-6.2088, 106.8456], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        map.invalidateSize();
+    }, 300);
+};
+
+const fetchLatestLocation = async (id) => {
+    try {
+        const response = await axios.get(`/admin/tracking/${id}/latest`);
+        if (response.data.status === 'online') {
+            updatePromotorLocation(response.data.data);
+        } else {
+            if (promotorToday.value?.check_in_lat && promotorToday.value?.check_in_lng) {
+                updatePromotorLocation({
+                    user_name: selectedPromotorName.value,
+                    latitude: parseFloat(promotorToday.value.check_in_lat),
+                    longitude: parseFloat(promotorToday.value.check_in_lng),
+                    recorded_at: promotorToday.value.date
+                }, true);
+            }
+        }
+    } catch (e) {
+        console.error(e);
+    }
+};
+
+const updatePromotorLocation = (payload, isFallback = false) => {
+    if (activeTab.value !== 'location') return;
+    if (!map) return;
+    const { user_name, latitude, longitude, recorded_at } = payload;
+    const latLng = new L.LatLng(latitude, longitude);
+    const timeText = isFallback 
+        ? `<span class="text-yellow-600 font-bold">Lokasi saat Check-in (Offline)</span>`
+        : `Waktu (App): ${new Date(recorded_at).toLocaleTimeString()}`;
+
+    const popupContent = `
+        <div class="text-sm">
+            <div class="font-bold text-blue-800 text-base">${user_name}</div>
+            <div class="text-gray-500 mt-1">Lat: ${latitude.toFixed(5)}, Lng: ${longitude.toFixed(5)}</div>
+            <div class="text-xs text-gray-500 mt-2">${timeText}</div>
+        </div>
+    `;
+
+    L.marker(latLng).addTo(map).bindPopup(popupContent).openPopup();
+    map.setView(latLng, 15);
 };
 
 const fetchTransactions = async () => {
@@ -421,35 +530,90 @@ const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indi
                         <h3 class="font-bold text-gray-800">Daftar Seluruh Promotor</h3>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                        <table class="min-w-full border-collapse">
+                            <thead class="border-b-2 border-gray-200">
                                 <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Nama Promotor</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Area / Region</th>
-                                    <th scope="col" class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Edukasi</th>
-                                    <th scope="col" class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">SP</th>
-                                    <th scope="col" class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Pulsa</th>
-                                    <th scope="col" class="px-6 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Gemini</th>
-                                    <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Total</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">No.</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Nama Promotor</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Jam Masuk</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Jam Keluar</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">KPI Progress</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-100">
-                                <tr v-for="promotor in allPromotors" :key="promotor.id" @click="openPromotorModal(promotor)" class="hover:bg-indigo-50/50 transition-colors cursor-pointer group">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="font-medium text-gray-900 group-hover:text-indigo-600 transition-colors">{{ promotor.name }}</div>
+                            <tbody class="divide-y divide-gray-100">
+                                <tr v-for="(promotor, index) in allPromotors" :key="promotor.id" @click="openPromotorModal(promotor)" class="hover:bg-gray-50 transition-colors cursor-pointer group">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-500">
+                                        {{ index + 1 }}.
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-600">{{ promotor.area_name }}</div>
-                                        <div class="text-xs text-gray-400">{{ promotor.region_name }}</div>
+                                        <div class="flex items-center gap-3">
+                                            <div class="h-9 w-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs group-hover:bg-blue-100 transition-colors shrink-0">
+                                                {{ promotor.name.substring(0, 2).toUpperCase() }}
+                                            </div>
+                                            <div>
+                                                <div class="font-bold text-gray-800 text-base">{{ promotor.name }}</div>
+                                                <div class="text-sm text-gray-500 mt-0.5">{{ promotor.area_name }} • {{ promotor.region_name }}</div>
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ promotor.total_edukasi }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ promotor.total_sp }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ promotor.total_pulsa }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ promotor.total_gemini }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-indigo-600">{{ promotor.total_sales }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span v-if="promotor.check_in_time" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-sm font-medium bg-green-50 text-green-700 border border-green-100">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                            {{ promotor.check_in_time }}
+                                        </span>
+                                        <span v-else class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-sm font-medium bg-red-50 text-red-700 border border-red-100">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                            Belum / Tidak Absen
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span v-if="promotor.check_out_time" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-sm font-medium bg-green-50 text-green-700 border border-green-100">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                            {{ promotor.check_out_time }}
+                                        </span>
+                                        <span v-else class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-sm font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                                            Belum Keluar
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex flex-col gap-1.5" @click.stop="openPromotorModal(promotor)">
+                                            <span :class="['text-base font-bold', kpiTextColor(avgKpi(promotor))]">KPI: {{ avgKpi(promotor) }}%</span>
+                                            <div class="flex items-center gap-3">
+                                                <div class="flex flex-col items-center gap-1 w-10">
+                                                    <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Edu</span>
+                                                    <div class="w-full bg-gray-100 rounded-full h-1.5 flex overflow-hidden">
+                                                        <div :class="['h-full transition-all', kpiColor(kpiPct(promotor.total_edukasi, KPI_TARGETS.edukasi))]" :style="{ width: kpiPct(promotor.total_edukasi, KPI_TARGETS.edukasi) + '%' }"></div>
+                                                    </div>
+                                                    <span :class="['text-[10px] font-bold', kpiTextColor(kpiPct(promotor.total_edukasi, KPI_TARGETS.edukasi))]">{{ kpiPct(promotor.total_edukasi, KPI_TARGETS.edukasi) }}%</span>
+                                                </div>
+                                                <div class="flex flex-col items-center gap-1 w-10">
+                                                    <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Rby</span>
+                                                    <div class="w-full bg-gray-100 rounded-full h-1.5 flex overflow-hidden">
+                                                        <div :class="['h-full transition-all', kpiColor(kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy))]" :style="{ width: kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy) + '%' }"></div>
+                                                    </div>
+                                                    <span :class="['text-[10px] font-bold', kpiTextColor(kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy))]">{{ kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy) }}%</span>
+                                                </div>
+                                                <div class="flex flex-col items-center gap-1 w-10">
+                                                    <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">SP</span>
+                                                    <div class="w-full bg-gray-100 rounded-full h-1.5 flex overflow-hidden">
+                                                        <div :class="['h-full transition-all', kpiColor(kpiPct(promotor.total_sp, KPI_TARGETS.sp))]" :style="{ width: kpiPct(promotor.total_sp, KPI_TARGETS.sp) + '%' }"></div>
+                                                    </div>
+                                                    <span :class="['text-[10px] font-bold', kpiTextColor(kpiPct(promotor.total_sp, KPI_TARGETS.sp))]">{{ kpiPct(promotor.total_sp, KPI_TARGETS.sp) }}%</span>
+                                                </div>
+                                                <div class="flex flex-col items-center gap-1 w-10">
+                                                    <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Gem</span>
+                                                    <div class="w-full bg-gray-100 rounded-full h-1.5 flex overflow-hidden">
+                                                        <div :class="['h-full transition-all', kpiColor(kpiPct(promotor.total_gemini, KPI_TARGETS.gemini))]" :style="{ width: kpiPct(promotor.total_gemini, KPI_TARGETS.gemini) + '%' }"></div>
+                                                    </div>
+                                                    <span :class="['text-[10px] font-bold', kpiTextColor(kpiPct(promotor.total_gemini, KPI_TARGETS.gemini))]">{{ kpiPct(promotor.total_gemini, KPI_TARGETS.gemini) }}%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
                                 </tr>
                                 <tr v-if="allPromotors.length === 0">
-                                    <td colspan="7" class="px-6 py-8 text-center text-sm text-gray-500">
+                                    <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500">
                                         Tidak ada data promotor.
                                     </td>
                                 </tr>
@@ -474,7 +638,10 @@ const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indi
                             <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title">
                                 Performa Kinerja Promotor: {{ selectedPromotorName }}
                             </h3>
-                            <p class="text-sm text-gray-500 mt-1">Akumulasi kinerja per tanggal.</p>
+                            <div class="mt-3 flex gap-2">
+                                <button @click="changeTab('kinerja')" :class="['px-3 py-1 text-xs font-medium rounded-md transition', activeTab === 'kinerja' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">Akumulasi Kinerja per tanggal.</button>
+                                <button @click="changeTab('location')" :class="['px-3 py-1 text-xs font-medium rounded-md transition', activeTab === 'location' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">Live Location & Detail Aktivitas</button>
+                            </div>
                         </div>
                         <button @click="closePromotorModal" class="text-gray-400 hover:text-gray-500 focus:outline-none">
                             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -483,6 +650,7 @@ const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indi
                         </button>
                     </div>
                     
+                    <template v-if="activeTab === 'kinerja'">
                     <!-- Modal Filter -->
                     <div class="bg-white px-6 py-3 border-b border-gray-100 flex flex-col sm:flex-row gap-4 shrink-0">
                         <div class="flex items-center gap-2 w-full sm:w-auto">
@@ -626,6 +794,135 @@ const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indi
                             </div>
                         </div>
                     </div>
+                    </template>
+                    <template v-else-if="activeTab === 'location'">
+                        <div class="flex-1 flex flex-col md:flex-row overflow-hidden min-h-[500px]">
+                            <!-- Detail Panel -->
+                            <div class="w-full md:w-1/3 p-6 bg-white border-b md:border-b-0 md:border-r border-gray-100 flex flex-col gap-6 overflow-y-auto">
+                                
+                                <!-- Status Jam Masuk -->
+                                <div>
+                                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Status Jam Masuk</h4>
+                                <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                    <div :class="['p-2 rounded-full', promotorToday?.check_in_time ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600']">
+                                    <svg v-if="promotorToday?.check_in_time" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                    </svg>
+                                    </div>
+                                    <div>
+                                    <div class="font-bold text-gray-800">{{ promotorToday?.check_in_time || 'Belum Absen' }}</div>
+                                    <div class="text-xs text-gray-500">Waktu Check-in Hari Ini</div>
+                                    </div>
+                                </div>
+                                </div>
+
+                                <!-- Status Jam Keluar -->
+                                <div>
+                                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Status Jam Keluar</h4>
+                                <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                    <div :class="['p-2 rounded-full', promotorToday?.check_out_time ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500']">
+                                    <svg v-if="promotorToday?.check_out_time" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                    </svg>
+                                    </div>
+                                    <div>
+                                    <div class="font-bold text-gray-800">{{ promotorToday?.check_out_time || 'Belum Keluar' }}</div>
+                                    <div class="text-xs text-gray-500">Waktu Check-out Hari Ini</div>
+                                    </div>
+                                </div>
+                                </div>
+
+                                <!-- Aktivitas Report & Rincian Penjualan -->
+                                <div>
+                                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Aktivitas Penjualan ({{ promotorToday?.date || '-' }})</h4>
+                                
+                                <!-- Report Status -->
+                                <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100 mb-3">
+                                    <div :class="['p-2 rounded-full', promotorToday && (promotorToday.total_edukasi > 0 || promotorToday.total_sp > 0 || promotorToday.total_pulsa > 0 || promotorToday.total_gemini > 0) ? 'bg-blue-100 text-blue-600' : 'bg-yellow-100 text-yellow-600']">
+                                    <svg v-if="promotorToday && (promotorToday.total_edukasi > 0 || promotorToday.total_sp > 0 || promotorToday.total_pulsa > 0 || promotorToday.total_gemini > 0)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                                    </svg>
+                                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                    </div>
+                                    <div>
+                                    <div class="font-bold text-gray-800">{{ promotorToday && (promotorToday.total_edukasi > 0 || promotorToday.total_sp > 0 || promotorToday.total_pulsa > 0 || promotorToday.total_gemini > 0) ? 'Terdapat Transaksi' : 'Belum Ada Transaksi' }}</div>
+                                    <div class="text-xs text-gray-500">Status Laporan</div>
+                                    </div>
+                                </div>
+
+                                <!-- Rincian -->
+                                <div v-if="promotorToday && (promotorToday.total_edukasi > 0 || promotorToday.total_sp > 0 || promotorToday.total_pulsa > 0 || promotorToday.total_gemini > 0)" class="grid grid-cols-2 gap-3 mt-4">
+                                    <div class="bg-gray-50 border border-gray-100 rounded-lg p-3 text-center">
+                                    <div class="text-xs text-gray-500 mb-1">Edukasi</div>
+                                    <div class="text-lg font-bold text-gray-800">{{ promotorToday.total_edukasi }}</div>
+                                    </div>
+                                    <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-3 text-center">
+                                    <div class="text-xs text-indigo-500 mb-1">Starter Pack</div>
+                                    <div class="text-lg font-bold text-indigo-800">{{ promotorToday.total_sp }}</div>
+                                    </div>
+                                    <div class="bg-green-50 border border-green-100 rounded-lg p-3 text-center">
+                                    <div class="text-xs text-green-500 mb-1">Pulsa</div>
+                                    <div class="text-lg font-bold text-green-800">{{ promotorToday.total_pulsa }}</div>
+                                    </div>
+                                    <div class="bg-rose-50 border border-rose-100 rounded-lg p-3 text-center">
+                                    <div class="text-xs text-rose-500 mb-1">Gemini</div>
+                                    <div class="text-lg font-bold text-rose-800">{{ promotorToday.total_gemini }}</div>
+                                    </div>
+                                </div>
+                                </div>
+
+                                <!-- History Log 7 Hari -->
+                                <div class="mt-4 border-t pt-4">
+                                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Riwayat 7 Hari Terakhir</h4>
+                                <div v-if="isLoadingHistory" class="flex justify-center p-4">
+                                    <svg class="animate-spin h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </div>
+                                <div v-else class="space-y-3">
+                                    <div v-for="log in promotorHistory" :key="log.date" class="bg-white border rounded-lg p-3 shadow-sm hover:shadow-md transition">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="font-bold text-gray-700 text-sm">{{ log.date }}</span>
+                                        <span v-if="log.check_in_time" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-medium">{{ log.check_in_time }} - {{ log.check_out_time || '??' }}</span>
+                                        <span v-else class="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded font-medium">Tidak Masuk</span>
+                                    </div>
+                                    <div class="grid grid-cols-4 gap-1 text-center">
+                                        <div class="bg-gray-50 rounded p-1">
+                                        <div class="text-[10px] text-gray-500">Edu</div>
+                                        <div class="text-xs font-bold">{{ log.total_edukasi }}</div>
+                                        </div>
+                                        <div class="bg-indigo-50 rounded p-1">
+                                        <div class="text-[10px] text-indigo-500">SP</div>
+                                        <div class="text-xs font-bold">{{ log.total_sp }}</div>
+                                        </div>
+                                        <div class="bg-green-50 rounded p-1">
+                                        <div class="text-[10px] text-green-500">Pls</div>
+                                        <div class="text-xs font-bold">{{ log.total_pulsa }}</div>
+                                        </div>
+                                        <div class="bg-rose-50 rounded p-1">
+                                        <div class="text-[10px] text-rose-500">Gem</div>
+                                        <div class="text-xs font-bold">{{ log.total_gemini }}</div>
+                                        </div>
+                                    </div>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+                            <!-- Map Panel -->
+                            <div class="w-full md:w-2/3 h-64 md:h-auto relative z-0 bg-gray-100">
+                                <div ref="mapContainer" class="w-full h-full absolute inset-0"></div>
+                            </div>
+                        </div>
+                    </template>
                 </div>
             </div>
         </div>

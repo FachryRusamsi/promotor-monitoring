@@ -59,8 +59,7 @@ Route::prefix('admin')
         Route::get('/promotor/{user}/transactions', [AdminDashboardController::class, 'promotorTransactions'])
             ->name('promotor.transactions');
             
-        Route::get('/monitoring', [AdminDashboardController::class, 'monitoring'])
-            ->name('monitoring');
+
             
         Route::get('/promotor/{user}/history-log', [AdminDashboardController::class, 'promotorHistoryLog'])
             ->name('promotor.history-log');

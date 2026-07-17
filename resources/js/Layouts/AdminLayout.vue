@@ -124,22 +124,7 @@ const sidebarOpen = ref(false);
                         KPI Dashboard
                     </Link>
 
-                    <Link
-                        :href="route('admin.monitoring')"
-                        @click="sidebarOpen = false"
-                        :class="[
-                            'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
-                            route().current('admin.monitoring')
-                                ? 'bg-gray-500/10 text-gray-700 font-semibold shadow-sm'
-                                : 'text-gray-600 hover:bg-red-50 hover:text-[#ED1C24]'
-                        ]"
-                    >
-                        <svg class="w-5 h-5 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                d="M9 20l-5-2V6l5 2 6-2 6 2v12l-6-2-6 2z"/>
-                        </svg>
-                        Live Monitoring
-                    </Link>
+
 
                     <Link
                         :href="route('admin.reports.index')"
