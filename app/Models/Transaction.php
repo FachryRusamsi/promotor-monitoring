@@ -15,7 +15,7 @@ class Transaction extends Model
         'transaction_date',
         'jml_edukasi',
         'jml_sp',
-        'jml_pulsa',
+        'jml_rebuy',
         'jml_aktivasi_gemini',
         'foto_edukasi',
         'foto_penjualan',

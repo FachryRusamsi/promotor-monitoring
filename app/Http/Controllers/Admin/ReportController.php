@@ -67,7 +67,7 @@ class ReportController extends Controller
                     'check_out_at' => $attendance?->check_out_at?->format('Y-m-d H:i:s'),
                     'total_edukasi' => $userTransactions->sum('jml_edukasi'),
                     'total_sp' => $userTransactions->sum('jml_sp'),
-                    'total_pulsa' => $userTransactions->sum('jml_pulsa'),
+                    'total_rebuy' => $userTransactions->sum('jml_rebuy'),
                     'total_aktivasi_gemini' => $userTransactions->sum('jml_aktivasi_gemini'),
                     'msisdn_list' => $details->values()->toArray(),
                 ];

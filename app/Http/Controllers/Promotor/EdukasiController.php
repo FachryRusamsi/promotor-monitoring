@@ -68,7 +68,7 @@ class EdukasiController extends Controller
 
                 'jml_edukasi' => $request->input('jml_edukasi'),
                 'jml_sp' => 0,
-                'jml_pulsa' => 0,
+                'jml_rebuy' => 0,
                 'jml_aktivasi_gemini' => 0,
 
                 'foto_edukasi' => empty($pathEdukasi) ? null : collect($pathEdukasi)->toJson(),

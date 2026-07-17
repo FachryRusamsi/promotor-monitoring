@@ -55,7 +55,7 @@ class TransactionController extends Controller
 
         $type = $request->input('type');
         $jml_sp = $type === 'starter_pack' ? 1 : 0;
-        $jml_pulsa = $type === 'reload' ? 1 : 0;
+        $jml_rebuy = $type === 'reload' ? 1 : 0;
         $jml_aktivasi_gemini = $type === 'gemini_activation' ? 1 : 0;
         $jml_edukasi = 0; // Transaksi penjualan tidak mencampur data edukasi lagi
 
@@ -84,7 +84,7 @@ class TransactionController extends Controller
             $pathPenjualan,
             $jml_edukasi,
             $jml_sp,
-            $jml_pulsa,
+            $jml_rebuy,
             $jml_aktivasi_gemini
         ) {
 
@@ -96,7 +96,7 @@ class TransactionController extends Controller
 
                 'jml_edukasi' => $jml_edukasi,
                 'jml_sp' => $jml_sp,
-                'jml_pulsa' => $jml_pulsa,
+                'jml_rebuy' => $jml_rebuy,
                 'jml_aktivasi_gemini' => $jml_aktivasi_gemini,
 
                 'foto_edukasi' => null,

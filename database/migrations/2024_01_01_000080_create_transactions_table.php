@@ -33,7 +33,7 @@ return new class extends Migration
             $table->unsignedInteger('jml_sp')->default(0)
                 ->comment('Jumlah starter pack terjual');
 
-            $table->unsignedInteger('jml_pulsa')->default(0)
+            $table->unsignedInteger('jml_rebuy')->default(0)
                 ->comment('Jumlah reload/pulsa terjual');
 
             $table->unsignedInteger('jml_aktivasi_gemini')->default(0)

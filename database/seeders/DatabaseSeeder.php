@@ -82,7 +82,7 @@ class DatabaseSeeder extends Seeder
                         'transaction_date' => today(),
                         'jml_edukasi' => rand(5, 20),
                         'jml_sp' => 0,
-                        'jml_pulsa' => 0,
+                        'jml_rebuy' => 0,
                         'jml_aktivasi_gemini' => 0,
                         'validation_status' => 'valid',
                     ]);
@@ -95,7 +95,7 @@ class DatabaseSeeder extends Seeder
                         'transaction_date' => today(),
                         'jml_edukasi' => 0,
                         'jml_sp' => rand(2, 10),
-                        'jml_pulsa' => rand(10, 50),
+                        'jml_rebuy' => rand(10, 50),
                         'jml_aktivasi_gemini' => rand(0, 5),
                         'validation_status' => 'valid',
                     ]);

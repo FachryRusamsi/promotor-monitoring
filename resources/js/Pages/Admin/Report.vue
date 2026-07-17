@@ -149,7 +149,7 @@ const statusColors = {
                       </span>
                       <span class="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-md text-xs">
                         <span class="text-gray-500 uppercase font-medium">Pls</span>
-                        <span class="text-indigo-600 font-bold">{{ report.total_pulsa }}</span>
+                        <span class="text-indigo-600 font-bold">{{ report.total_rebuy }}</span>
                       </span>
                       <span class="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-md text-xs">
                         <span class="text-gray-500 uppercase font-medium">Gem</span>
