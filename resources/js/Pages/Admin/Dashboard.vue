@@ -75,7 +75,7 @@ const pieChartData = computed(() => ({
     labels: currentChartDataList.value.map(r => r.name),
     datasets: [{
         backgroundColor: ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#14B8A6', '#6366F1', '#84CC16'],
-        data: currentChartDataList.value.map(r => r.total_sales !== undefined ? r.total_sales : (r.total_edukasi + r.total_sp + r.total_pulsa + r.total_gemini))
+        data: currentChartDataList.value.map(r => r.total_sales !== undefined ? r.total_sales : (r.total_edukasi + r.total_sp + r.total_rebuy + r.total_gemini))
     }]
 }));
 
@@ -121,7 +121,7 @@ const lineChartData = computed(() => ({
             borderColor: '#10B981', 
             backgroundColor: '#10B981',
             tension: 0.3,
-            data: currentChartDataList.value.map(p => p.total_pulsa) 
+            data: currentChartDataList.value.map(p => p.total_rebuy) 
         },
         { 
             label: 'Aktivasi Gemini', 
@@ -307,7 +307,7 @@ const formatDate = (datetime) => {
 // KPI Targets & Helpers
 const KPI_TARGETS = { edukasi: 600, rebuy: 200, sp: 100, gemini: 100 };
 const kpiPct = (val, target) => Math.min(Math.round((val / target) * 100), 100);
-const avgKpi = (p) => Math.round((kpiPct(p.total_edukasi, KPI_TARGETS.edukasi) + kpiPct(p.total_pulsa, KPI_TARGETS.rebuy) + kpiPct(p.total_sp, KPI_TARGETS.sp) + kpiPct(p.total_gemini, KPI_TARGETS.gemini)) / 4);
+const avgKpi = (p) => Math.round((kpiPct(p.total_edukasi, KPI_TARGETS.edukasi) + kpiPct(p.total_rebuy, KPI_TARGETS.rebuy) + kpiPct(p.total_sp, KPI_TARGETS.sp) + kpiPct(p.total_gemini, KPI_TARGETS.gemini)) / 4);
 const kpiColor = (p) => p >= 100 ? 'bg-emerald-500' : p >= 60 ? 'bg-indigo-500' : p >= 30 ? 'bg-amber-400' : 'bg-red-400';
 const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indigo-600' : p >= 30 ? 'text-amber-500' : 'text-red-500';
 </script>
@@ -385,7 +385,7 @@ const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indi
                     </div>
                     <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-5 shadow-lg text-white">
                         <h3 class="text-blue-100 font-medium text-sm">Total Pulsa</h3>
-                        <p class="text-3xl font-bold mt-2">{{ kpi.total_pulsa }}</p>
+                        <p class="text-3xl font-bold mt-2">{{ kpi.total_rebuy }}</p>
                     </div>
                     <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-5 shadow-lg text-white">
                         <h3 class="text-purple-100 font-medium text-sm">Aktivasi Gemini</h3>
@@ -494,9 +494,9 @@ const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indi
                                         <div class="flex flex-col items-center gap-1.5">
                                             <span class="text-xs text-gray-500 uppercase font-bold tracking-wider">Rby</span>
                                             <div class="w-14 bg-gray-100 rounded-full h-2 flex overflow-hidden">
-                                                <div :class="['h-full transition-all', kpiColor(kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy))]" :style="{ width: kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy) + '%' }"></div>
+                                                <div :class="['h-full transition-all', kpiColor(kpiPct(promotor.total_rebuy, KPI_TARGETS.rebuy))]" :style="{ width: kpiPct(promotor.total_rebuy, KPI_TARGETS.rebuy) + '%' }"></div>
                                             </div>
-                                            <span :class="['text-xs font-bold', kpiTextColor(kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy))]">{{ kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy) }}%</span>
+                                            <span :class="['text-xs font-bold', kpiTextColor(kpiPct(promotor.total_rebuy, KPI_TARGETS.rebuy))]">{{ kpiPct(promotor.total_rebuy, KPI_TARGETS.rebuy) }}%</span>
                                         </div>
                                         <!-- SP -->
                                         <div class="flex flex-col items-center gap-1.5">
@@ -590,9 +590,9 @@ const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indi
                                                 <div class="flex flex-col items-center gap-1 w-10">
                                                     <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Rby</span>
                                                     <div class="w-full bg-gray-100 rounded-full h-1.5 flex overflow-hidden">
-                                                        <div :class="['h-full transition-all', kpiColor(kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy))]" :style="{ width: kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy) + '%' }"></div>
+                                                        <div :class="['h-full transition-all', kpiColor(kpiPct(promotor.total_rebuy, KPI_TARGETS.rebuy))]" :style="{ width: kpiPct(promotor.total_rebuy, KPI_TARGETS.rebuy) + '%' }"></div>
                                                     </div>
-                                                    <span :class="['text-[10px] font-bold', kpiTextColor(kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy))]">{{ kpiPct(promotor.total_pulsa, KPI_TARGETS.rebuy) }}%</span>
+                                                    <span :class="['text-[10px] font-bold', kpiTextColor(kpiPct(promotor.total_rebuy, KPI_TARGETS.rebuy))]">{{ kpiPct(promotor.total_rebuy, KPI_TARGETS.rebuy) }}%</span>
                                                 </div>
                                                 <div class="flex flex-col items-center gap-1 w-10">
                                                     <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">SP</span>
@@ -695,9 +695,9 @@ const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indi
                                 </div>
                                 <div class="text-center pt-3 md:pt-0 border-r-0 md:border-r border-gray-100">
                                     <p class="text-xs text-gray-500">Rebuy</p>
-                                    <p class="text-xl font-bold text-blue-600">{{ promotorTransactions.reduce((acc, t) => acc + t.jml_pulsa, 0) }}</p>
-                                    <p :class="['text-sm font-bold mt-0.5', kpiTextColor(kpiPct(promotorTransactions.reduce((acc, t) => acc + t.jml_pulsa, 0), KPI_TARGETS.rebuy))]">
-                                        {{ kpiPct(promotorTransactions.reduce((acc, t) => acc + t.jml_pulsa, 0), KPI_TARGETS.rebuy) }}% KPI
+                                    <p class="text-xl font-bold text-blue-600">{{ promotorTransactions.reduce((acc, t) => acc + t.jml_rebuy, 0) }}</p>
+                                    <p :class="['text-sm font-bold mt-0.5', kpiTextColor(kpiPct(promotorTransactions.reduce((acc, t) => acc + t.jml_rebuy, 0), KPI_TARGETS.rebuy))]">
+                                        {{ kpiPct(promotorTransactions.reduce((acc, t) => acc + t.jml_rebuy, 0), KPI_TARGETS.rebuy) }}% KPI
                                     </p>
                                 </div>
                                 <div class="text-center pt-3 md:pt-0 border-l border-gray-100 md:border-l-0">
@@ -844,8 +844,8 @@ const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indi
                                 
                                 <!-- Report Status -->
                                 <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100 mb-3">
-                                    <div :class="['p-2 rounded-full', promotorToday && (promotorToday.total_edukasi > 0 || promotorToday.total_sp > 0 || promotorToday.total_pulsa > 0 || promotorToday.total_gemini > 0) ? 'bg-blue-100 text-blue-600' : 'bg-yellow-100 text-yellow-600']">
-                                    <svg v-if="promotorToday && (promotorToday.total_edukasi > 0 || promotorToday.total_sp > 0 || promotorToday.total_pulsa > 0 || promotorToday.total_gemini > 0)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <div :class="['p-2 rounded-full', promotorToday && (promotorToday.total_edukasi > 0 || promotorToday.total_sp > 0 || promotorToday.total_rebuy > 0 || promotorToday.total_gemini > 0) ? 'bg-blue-100 text-blue-600' : 'bg-yellow-100 text-yellow-600']">
+                                    <svg v-if="promotorToday && (promotorToday.total_edukasi > 0 || promotorToday.total_sp > 0 || promotorToday.total_rebuy > 0 || promotorToday.total_gemini > 0)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
                                     </svg>
                                     <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -853,13 +853,13 @@ const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indi
                                     </svg>
                                     </div>
                                     <div>
-                                    <div class="font-bold text-gray-800">{{ promotorToday && (promotorToday.total_edukasi > 0 || promotorToday.total_sp > 0 || promotorToday.total_pulsa > 0 || promotorToday.total_gemini > 0) ? 'Terdapat Transaksi' : 'Belum Ada Transaksi' }}</div>
+                                    <div class="font-bold text-gray-800">{{ promotorToday && (promotorToday.total_edukasi > 0 || promotorToday.total_sp > 0 || promotorToday.total_rebuy > 0 || promotorToday.total_gemini > 0) ? 'Terdapat Transaksi' : 'Belum Ada Transaksi' }}</div>
                                     <div class="text-xs text-gray-500">Status Laporan</div>
                                     </div>
                                 </div>
 
                                 <!-- Rincian -->
-                                <div v-if="promotorToday && (promotorToday.total_edukasi > 0 || promotorToday.total_sp > 0 || promotorToday.total_pulsa > 0 || promotorToday.total_gemini > 0)" class="grid grid-cols-2 gap-3 mt-4">
+                                <div v-if="promotorToday && (promotorToday.total_edukasi > 0 || promotorToday.total_sp > 0 || promotorToday.total_rebuy > 0 || promotorToday.total_gemini > 0)" class="grid grid-cols-2 gap-3 mt-4">
                                     <div class="bg-gray-50 border border-gray-100 rounded-lg p-3 text-center">
                                     <div class="text-xs text-gray-500 mb-1">Edukasi</div>
                                     <div class="text-lg font-bold text-gray-800">{{ promotorToday.total_edukasi }}</div>
@@ -870,7 +870,7 @@ const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indi
                                     </div>
                                     <div class="bg-green-50 border border-green-100 rounded-lg p-3 text-center">
                                     <div class="text-xs text-green-500 mb-1">Pulsa</div>
-                                    <div class="text-lg font-bold text-green-800">{{ promotorToday.total_pulsa }}</div>
+                                    <div class="text-lg font-bold text-green-800">{{ promotorToday.total_rebuy }}</div>
                                     </div>
                                     <div class="bg-rose-50 border border-rose-100 rounded-lg p-3 text-center">
                                     <div class="text-xs text-rose-500 mb-1">Gemini</div>
@@ -906,7 +906,7 @@ const kpiTextColor = (p) => p >= 100 ? 'text-emerald-600' : p >= 60 ? 'text-indi
                                         </div>
                                         <div class="bg-green-50 rounded p-1">
                                         <div class="text-[10px] text-green-500">Pls</div>
-                                        <div class="text-xs font-bold">{{ log.total_pulsa }}</div>
+                                        <div class="text-xs font-bold">{{ log.total_rebuy }}</div>
                                         </div>
                                         <div class="bg-rose-50 rounded p-1">
                                         <div class="text-[10px] text-rose-500">Gem</div>
