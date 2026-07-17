@@ -95,9 +95,26 @@ class ReportController extends Controller
         $regionId = $request->query('region_id');
         $areaId = $request->query('area_id');
 
+        $dateSuffix = '';
+        if ($startDate && $endDate) {
+            if ($startDate === $endDate) {
+                $dateSuffix = '-' . \Carbon\Carbon::parse($startDate)->format('d-m-Y');
+            } else {
+                $dateSuffix = '-' . \Carbon\Carbon::parse($startDate)->format('d-m-Y') . '-sampai-' . \Carbon\Carbon::parse($endDate)->format('d-m-Y');
+            }
+        } elseif ($startDate) {
+            $dateSuffix = '-mulai-' . \Carbon\Carbon::parse($startDate)->format('d-m-Y');
+        } elseif ($endDate) {
+            $dateSuffix = '-sampai-' . \Carbon\Carbon::parse($endDate)->format('d-m-Y');
+        } else {
+            $dateSuffix = '-' . today()->format('d-m-Y');
+        }
+
+        $filename = 'Report-Achievement-Promotor' . $dateSuffix . '.xlsx';
+
         return Excel::download(
             new AchievementReportExport($startDate, $endDate, $regionId, $areaId), 
-            'Report-Achievement-Promotor.xlsx'
+            $filename
         );
     }
 }

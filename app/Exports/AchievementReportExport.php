@@ -58,6 +58,7 @@ class AchievementReportExport implements FromCollection, WithMapping, WithStyles
         foreach ($regionsQuery as $region) {
             $regionPromotorCount = 0;
             $regionEdukasi = 0;
+            $regionSp = 0;
             $regionRebuy = 0;
             $regionAkuisisi = 0;
 
@@ -68,13 +69,20 @@ class AchievementReportExport implements FromCollection, WithMapping, WithStyles
                 $stats = DB::table('users')
                     ->where('area_id', $area->id)
                     ->join('transactions', 'users.id', '=', 'transactions.user_id')
-                    ->when($this->startDate && $this->endDate, fn($q) => $q->whereBetween('transactions.transaction_date', [$this->startDate, $this->endDate]))
+                    ->when($this->startDate && $this->endDate, function($q) {
+                        if ($this->startDate === $this->endDate) {
+                            $q->whereDate('transactions.transaction_date', $this->startDate);
+                        } else {
+                            $q->whereBetween('transactions.transaction_date', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59']);
+                        }
+                    })
                     ->when($this->startDate && !$this->endDate, fn($q) => $q->whereDate('transactions.transaction_date', '>=', $this->startDate))
                     ->when(!$this->startDate && $this->endDate, fn($q) => $q->whereDate('transactions.transaction_date', '<=', $this->endDate))
                     ->selectRaw('
                         COUNT(DISTINCT users.id) as promotor_count,
                         SUM(transactions.jml_edukasi) as total_edukasi,
-                        SUM(transactions.jml_sp + transactions.jml_rebuy) as total_rebuy,
+                        SUM(transactions.jml_sp) as total_sp,
+                        SUM(transactions.jml_rebuy) as total_rebuy,
                         SUM(transactions.jml_aktivasi_gemini) as total_akuisisi
                     ')
                     ->first();
@@ -86,6 +94,7 @@ class AchievementReportExport implements FromCollection, WithMapping, WithStyles
                         'area' => $area->name,
                         'promotor_count' => $stats->promotor_count,
                         'edukasi' => $stats->total_edukasi ?? 0,
+                        'sp' => $stats->total_sp ?? 0,
                         'rebuy' => $stats->total_rebuy ?? 0,
                         'akuisisi' => $stats->total_akuisisi ?? 0,
                         'is_total' => false,
@@ -94,6 +103,7 @@ class AchievementReportExport implements FromCollection, WithMapping, WithStyles
 
                     $regionPromotorCount += $stats->promotor_count;
                     $regionEdukasi += $stats->total_edukasi ?? 0;
+                    $regionSp += $stats->total_sp ?? 0;
                     $regionRebuy += $stats->total_rebuy ?? 0;
                     $regionAkuisisi += $stats->total_akuisisi ?? 0;
                     
@@ -109,6 +119,7 @@ class AchievementReportExport implements FromCollection, WithMapping, WithStyles
                     'area' => '',
                     'promotor_count' => $regionPromotorCount,
                     'edukasi' => $regionEdukasi,
+                    'sp' => $regionSp,
                     'rebuy' => $regionRebuy,
                     'akuisisi' => $regionAkuisisi,
                     'is_total' => true,
@@ -128,6 +139,7 @@ class AchievementReportExport implements FromCollection, WithMapping, WithStyles
             $row['area'],
             $row['promotor_count'],
             $row['edukasi'],
+            $row['sp'],
             $row['rebuy'],
             $row['akuisisi'],
         ];
@@ -135,7 +147,7 @@ class AchievementReportExport implements FromCollection, WithMapping, WithStyles
 
     public function startCell(): string
     {
-        return 'B2';
+        return 'B4';
     }
 
     public function styles(Worksheet $sheet)
@@ -144,10 +156,10 @@ class AchievementReportExport implements FromCollection, WithMapping, WithStyles
         $lastColumn = $sheet->getHighestColumn();
         
         // Style the Title
-        $sheet->mergeCells('B2:H2');
+        $sheet->mergeCells('B2:I2');
         $sheet->setCellValue('B2', 'REPORT ACCUMULATION ACHIEVEMENT PROMOTOR');
         
-        $sheet->getStyle('B2:H2')->applyFromArray([
+        $sheet->getStyle('B2:I2')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'size' => 12,
@@ -168,11 +180,12 @@ class AchievementReportExport implements FromCollection, WithMapping, WithStyles
         $sheet->setCellValue('D3', 'Area Penempatan');
         $sheet->setCellValue('E3', 'Jumlah Promotor');
         $sheet->setCellValue('F3', 'Edukasi Total');
-        $sheet->setCellValue('G3', 'Rebuy Total');
-        $sheet->setCellValue('H3', 'Akuisisi Total');
+        $sheet->setCellValue('G3', 'SP Total');
+        $sheet->setCellValue('H3', 'Rebuy Total');
+        $sheet->setCellValue('I3', 'Akuisisi Total');
 
         // Style the Headers
-        $sheet->getStyle('B3:H3')->applyFromArray([
+        $sheet->getStyle('B3:I3')->applyFromArray([
             'font' => [
                 'bold' => true,
             ],
@@ -192,13 +205,13 @@ class AchievementReportExport implements FromCollection, WithMapping, WithStyles
         ]);
 
         // Auto-size columns
-        foreach (range('B', 'H') as $columnID) {
+        foreach (range('B', 'I') as $columnID) {
             $sheet->getColumnDimension($columnID)->setAutoSize(true);
         }
 
         // Apply borders to all data cells
         if ($lastRow > 3) {
-            $sheet->getStyle('B4:H' . $lastRow)->applyFromArray([
+            $sheet->getStyle('B4:I' . $lastRow)->applyFromArray([
                 'borders' => [
                     'allBorders' => [
                         'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
@@ -221,7 +234,7 @@ class AchievementReportExport implements FromCollection, WithMapping, WithStyles
                 for ($row = 4; $row <= $lastRow; $row++) {
                     $rgeValue = $sheet->getCell('C' . $row)->getValue();
                     if ($rgeValue === 'TOTAL') {
-                        $sheet->getStyle('B' . $row . ':H' . $row)->applyFromArray([
+                        $sheet->getStyle('B' . $row . ':I' . $row)->applyFromArray([
                             'font' => [
                                 'bold' => true,
                             ],
